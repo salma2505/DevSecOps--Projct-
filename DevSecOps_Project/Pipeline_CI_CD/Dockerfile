@@ -1,10 +1,10 @@
-from flask import Flask
-app=Flask(__name__)
 
-@app.route('/')
-def home():
-    return "Welcome it's DevSecOps Project"
+FROM python:3.9-slim
+WORKDIR /app
+COPY ../App_code/ /app/
+RUN pip install --no-cache-dir -r requirements.txt
+EXPOSE 5000
+ENV FLASK_APP=app.py
+CMD ["flask", "run", "--host=0.0.0.0"]
 
-if __main__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
 

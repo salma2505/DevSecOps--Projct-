@@ -1,7 +1,43 @@
+terraform {
+  required_providers {
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "~> 3.0"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.21"
+    }
+  }
+}
+
+# Provider for Docker (Required for Minikube)
+provider "docker" {}
+
+# Create a Minikube container (Using Docker)
+resource "docker_container" "minikube" {
+  name  = "minikube"
+  image = "kicbase/stable:v0.0.35"
+  privileged = true
+  restart    = "unless-stopped"
+
+  volumes {
+    volume_name    = "minikube-data"
+    container_path = "/var/lib/minikube"
+  }
+
+  ports {
+    internal = 8443
+    external = 8443
+  }
+}
+
+# Kubernetes Provider (After Minikube is Running)
 provider "kubernetes" {
   config_path = "/home/devops/.kube/config"
 }
 
+# Kubernetes Namespace
 resource "kubernetes_namespace" "dev" {
   metadata {
     name = "dev-environment"
@@ -12,6 +48,7 @@ resource "kubernetes_namespace" "dev" {
   }
 }
 
+# Flask App Deployment
 resource "kubernetes_deployment" "flask_app" {
   metadata {
     name      = "flask-app"
@@ -62,6 +99,7 @@ resource "kubernetes_deployment" "flask_app" {
   }
 }
 
+# Kubernetes Service for Flask App
 resource "kubernetes_service" "flask_service" {
   metadata {
     name      = "flask-service"
@@ -79,7 +117,6 @@ resource "kubernetes_service" "flask_service" {
     }
 
     type = "NodePort"
-
   }
 }
 

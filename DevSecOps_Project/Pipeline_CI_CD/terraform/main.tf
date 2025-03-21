@@ -1,58 +1,34 @@
-terraform {
-  required_providers {
-    docker = {
-      source  = "kreuzwerker/docker"
-      version = "~> 3.0"
-    }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.21"
-    }
-  }
-}
-
-# Provider for Docker (Required for Minikube)
-provider "docker" {}
-
-# Create a Minikube container (Using Docker)
-resource "docker_container" "minikube" {
-  name  = "minikube"
-  image = "kicbase/stable:v0.0.35"
-  privileged = true
-  restart    = "unless-stopped"
-
-  volumes {
-    volume_name    = "minikube-data"
-    container_path = "/var/lib/minikube"
-  }
-
-  ports {
-    internal = 8443
-    external = 8443
-  }
-}
-
-# Kubernetes Provider (After Minikube is Running)
 provider "kubernetes" {
-  config_path = "/home/devops/.kube/config"
+  host                   = "https://192.168.49.2:8443"
+  cluster_ca_certificate = file("/home/devops/.minikube/ca.crt")
+  client_key             = file("/home/devops/.minikube/profiles/minikube/client.key")
+  client_certificate     = file("/home/devops/.minikube/profiles/minikube/client.crt")
 }
 
-# Kubernetes Namespace
-resource "kubernetes_namespace" "dev" {
+# Define Kubernetes Namespace
+resource "kubernetes_namespace" "devsecops" {
   metadata {
-    name = "dev-environment"
-  }
-
-  lifecycle {
-    ignore_changes = [metadata]
+    name = "devsecops"
   }
 }
 
-# Flask App Deployment
+# Define Kubernetes Secret (Hardcoded in YAML)
+resource "kubernetes_secret" "flask_secret" {
+  metadata {
+    name      = "flask-secret"
+    namespace = kubernetes_namespace.devsecops.metadata[0].name
+  }
+  
+  data = {
+    "SECRET_KEY" = "Secret378@"
+  }
+}
+
+# Define Kubernetes Deployment for Flask App
 resource "kubernetes_deployment" "flask_app" {
   metadata {
     name      = "flask-app"
-    namespace = kubernetes_namespace.dev.metadata[0].name
+    namespace = kubernetes_namespace.devsecops.metadata[0].name
     labels = {
       app = "flask"
     }
@@ -83,14 +59,13 @@ resource "kubernetes_deployment" "flask_app" {
             container_port = 5000
           }
 
-          resources {
-            limits = {
-              cpu    = "500m"
-              memory = "512Mi"
-            }
-            requests = {
-              cpu    = "250m"
-              memory = "256Mi"
+          env {
+            name  = "SECRET_KEY"
+            value_from {
+              secret_key_ref {
+                name = "flask-secret"
+                key  = "SECRET_KEY"
+              }
             }
           }
         }
@@ -99,11 +74,11 @@ resource "kubernetes_deployment" "flask_app" {
   }
 }
 
-# Kubernetes Service for Flask App
+# Define Kubernetes Service for Flask App
 resource "kubernetes_service" "flask_service" {
   metadata {
     name      = "flask-service"
-    namespace = kubernetes_namespace.dev.metadata[0].name
+    namespace = kubernetes_namespace.devsecops.metadata[0].name
   }
 
   spec {
@@ -120,5 +95,3 @@ resource "kubernetes_service" "flask_service" {
   }
 }
 
- 
-         

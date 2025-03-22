@@ -13,8 +13,7 @@ resource "kubernetes_namespace" "devsecops" {
 
   lifecycle {
     ignore_changes = [
-      metadata.0.creation_timestamp,
-      metadata.0.uid,
+      metadata,
     ]
   }
 }

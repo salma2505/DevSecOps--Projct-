@@ -1,6 +1,6 @@
 provider "kubernetes" {
   host                   = "https://192.168.49.2:8443"
-  cluster_ca_certificate = file("/home/devops/.minikube/ca.crt")
+  cluster_ca_certificate = file("/home/devops/.minikube/profiles/minikube/apiserver.crt")
   client_key             = file("/home/devops/.minikube/profiles/minikube/client.key")
   client_certificate     = file("/home/devops/.minikube/profiles/minikube/client.crt")
 }

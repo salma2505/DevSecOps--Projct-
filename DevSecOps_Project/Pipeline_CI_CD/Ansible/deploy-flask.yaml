@@ -3,7 +3,7 @@
   hosts: localhost
   tasks:
     - name: Appliquer le fichier de déploiement
-      command: kubectl apply -f flask-deployment.yaml
-
+      command: kubectl apply -f /home/devops/DevSecOps_Project/DevSecOps_Project/DevSecOps_Project/Pipeline_CI_CD/kuberntes/flask-deployment.yaml
     - name: Appliquer le fichier de service
-      command: kubectl apply -f flask-service.yaml
+      command: kubectl apply -f /home/devops/DevSecOps_Project/DevSecOps_Project/DevSecOps_Project/Pipeline_CI_CD/kuberntes/flask-service.yaml
+

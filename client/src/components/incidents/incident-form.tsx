@@ -42,6 +42,10 @@ const formSchema = insertIncidentSchema
     title: z.string().min(3, "Title must be at least 3 characters"),
     description: z.string().min(10, "Description must be at least 10 characters").optional(),
     dueDate: z.string().optional(),
+    status: z.string(),
+    priority: z.string(),
+    category: z.string(),
+    assignedTo: z.string().optional(),
   });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -55,7 +59,7 @@ const IncidentForm = ({ onClose }: IncidentFormProps) => {
   const { toast } = useToast();
 
   // Get teams for the assignment dropdown
-  const { data: teams, isLoading: isTeamsLoading } = useQuery({
+  const { data: teams = [], isLoading: isTeamsLoading } = useQuery<any[]>({
     queryKey: ["/api/teams"],
   });
 
@@ -228,11 +232,11 @@ const IncidentForm = ({ onClose }: IncidentFormProps) => {
                   </FormControl>
                   <SelectContent>
                     {isTeamsLoading ? (
-                      <SelectItem value="loading" disabled>
-                        Loading teams...
-                      </SelectItem>
+                      <div className="p-2 text-center text-sm">Loading teams...</div>
+                    ) : !teams || teams.length === 0 ? (
+                      <div className="p-2 text-center text-sm">No teams available</div>
                     ) : (
-                      teams?.map((team) => (
+                      teams.map((team) => (
                         <SelectItem key={team.id} value={team.id.toString()}>
                           {team.name}
                         </SelectItem>

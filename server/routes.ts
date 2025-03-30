@@ -11,7 +11,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Middleware to check authentication for all /api routes except auth routes
   app.use('/api', (req, res, next) => {
-    if (req.path.startsWith('/login') || req.path.startsWith('/register') || req.path.startsWith('/logout')) {
+    // Allow auth-related endpoints
+    if (req.path === '/login' || req.path === '/register' || req.path === '/logout' || req.path === '/user') {
       return next();
     }
     

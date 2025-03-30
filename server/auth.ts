@@ -88,13 +88,16 @@ export function setupAuth(app: Express) {
       // Default to "user" role if not specified or not admin
       const role = req.body.role || "user";
       
-      // Only allow admin to create admin or manager accounts
+      // For development/demo purposes, we're removing the role restriction
+      // In a production environment, you should uncomment this code:
+      /*
       if ((role === "admin" || role === "manager") && 
           (!req.isAuthenticated() || req.user?.role !== "admin")) {
         return res.status(403).json({ 
           message: "Only administrators can create admin or manager accounts" 
         });
       }
+      */
 
       // Create user with hashed password
       const user = await storage.createUser({

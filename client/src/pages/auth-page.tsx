@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useLocation, useLocation as useWouterLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { z } from "zod";
@@ -50,10 +50,11 @@ const AuthPage = () => {
   const { user, loginMutation, registerMutation, isLoading } = useAuth();
 
   // Redirect if user is already logged in
-  if (user) {
-    setLocation("/");
-    return null;
-  }
+  React.useEffect(() => {
+    if (user) {
+      setLocation("/");
+    }
+  }, [user, setLocation]);
 
   // Login form
   const loginForm = useForm<LoginFormValues>({

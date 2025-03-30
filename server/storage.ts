@@ -33,7 +33,7 @@ export interface IStorage {
   getResolutionTimeByPriority(): Promise<Record<string, number>>;
 
   // Session store for auth
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Use 'any' to fix TypeScript error
 }
 
 export class MemStorage implements IStorage {
@@ -43,7 +43,7 @@ export class MemStorage implements IStorage {
   private currentUserId: number;
   private currentTeamId: number;
   private currentIncidentId: number;
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Use 'any' to fix TypeScript error
 
   constructor() {
     this.users = new Map();
@@ -104,7 +104,13 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
+    // Ensure role is always set with a default value if not provided
+    const role = insertUser.role || "user";
+    const user: User = { 
+      ...insertUser, 
+      id,
+      role // Explicitly set role to ensure it's never undefined
+    };
     this.users.set(id, user);
     return user;
   }
@@ -133,14 +139,24 @@ export class MemStorage implements IStorage {
   async createIncident(insertIncident: InsertIncident): Promise<Incident> {
     const id = this.currentIncidentId++;
     const incidentId = `INC-${String(id).padStart(4, '0')}`;
+    
+    // Ensure all required fields have a value
     const incident: Incident = { 
-      ...insertIncident, 
       id, 
       incidentId,
+      title: insertIncident.title,
+      description: insertIncident.description || null,
+      status: insertIncident.status || "open",
+      priority: insertIncident.priority || "low",
+      category: insertIncident.category || "other",
+      assignedTo: insertIncident.assignedTo || null,
+      createdBy: insertIncident.createdBy,
       createdAt: new Date(),
       updatedAt: new Date(),
+      dueDate: insertIncident.dueDate || null,
       resolvedAt: null
     };
+    
     this.incidents.set(id, incident);
     return incident;
   }

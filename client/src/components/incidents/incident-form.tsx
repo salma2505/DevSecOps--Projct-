@@ -232,9 +232,9 @@ const IncidentForm = ({ onClose }: IncidentFormProps) => {
                   </FormControl>
                   <SelectContent>
                     {isTeamsLoading ? (
-                      <div className="p-2 text-center text-sm">Loading teams...</div>
+                      <SelectItem value="loading">Loading teams...</SelectItem>
                     ) : !teams || teams.length === 0 ? (
-                      <div className="p-2 text-center text-sm">No teams available</div>
+                      <SelectItem value="none">No teams available</SelectItem>
                     ) : (
                       teams.map((team) => (
                         <SelectItem key={team.id} value={team.id.toString()}>

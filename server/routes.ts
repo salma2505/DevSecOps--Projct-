@@ -145,17 +145,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST incident endpoint
   app.post('/api/incidents', requireAuth, async (req, res) => {
     try {
-      const validatedData = insertIncidentSchema.parse({
+      // Log the incoming data
+      console.log("Creating incident with data:", {
         ...req.body,
         createdBy: req.user!.id
       });
+      
+      // Make sure createdBy is always included from the authenticated user
+      // and that we're only passing valid fields to the schema parser
+      const incidentData = {
+        title: req.body.title,
+        description: req.body.description || "",
+        status: req.body.status,
+        priority: req.body.priority,
+        category: req.body.category,
+        createdBy: req.user!.id
+      };
+      
+      // Only add optional fields if present
+      if (req.body.dueDate) {
+        incidentData.dueDate = req.body.dueDate;
+      }
+      
+      if (req.body.assignedTo !== undefined && req.body.assignedTo !== null) {
+        incidentData.assignedTo = req.body.assignedTo;
+      }
+      
+      console.log("Validated incident data:", incidentData);
+      const validatedData = insertIncidentSchema.parse(incidentData);
       
       const incident = await storage.createIncident(validatedData);
       res.status(201).json(incident);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Validation error:", JSON.stringify(error.errors, null, 2));
         return res.status(400).json({ message: "Invalid incident data", errors: error.errors });
       }
+      console.error("Error creating incident:", error);
       res.status(500).json({ message: "Error creating incident" });
     }
   });

@@ -80,13 +80,23 @@ const IncidentForm = ({ onClose }: IncidentFormProps) => {
   const createIncidentMutation = useMutation({
     mutationFn: async (data: FormValues) => {
       // Format date fields for API
-      const formattedData = {
-        ...data,
-        dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
-        assignedTo: data.assignedTo && !["_none", "_loading", "_empty", "_all"].includes(data.assignedTo)
-          ? parseInt(data.assignedTo) 
-          : undefined,
+      // Only include required fields and correctly typed fields
+      const formattedData: Record<string, any> = {
+        title: data.title,
+        description: data.description || "",
+        status: data.status,
+        priority: data.priority,
+        category: data.category
       };
+
+      // Only add optional fields if they have valid values
+      if (data.dueDate) {
+        formattedData.dueDate = new Date(data.dueDate).toISOString();
+      }
+      
+      if (data.assignedTo && !["_none", "_loading", "_empty", "_all"].includes(data.assignedTo)) {
+        formattedData.assignedTo = parseInt(data.assignedTo);
+      }
 
       console.log("Submitting incident data:", formattedData);
       const res = await apiRequest("POST", "/api/incidents", formattedData);

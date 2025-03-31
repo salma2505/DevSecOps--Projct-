@@ -22,6 +22,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     next();
   });
+  
+  // Authentication middleware for specific routes
+  const requireAuth = (req: Request, res: Response, next: Function) => {
+    if (req.isAuthenticated()) {
+      return next();
+    }
+    return res.status(401).json({ message: "Not authenticated" });
+  };
 
   // Middleware to check admin role
   const isAdmin = (req: Request, res: Response, next: Function) => {
@@ -135,7 +143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST incident endpoint
-  app.post('/api/incidents', async (req, res) => {
+  app.post('/api/incidents', requireAuth, async (req, res) => {
     try {
       const validatedData = insertIncidentSchema.parse({
         ...req.body,

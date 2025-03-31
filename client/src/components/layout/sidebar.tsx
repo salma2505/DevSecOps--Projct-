@@ -54,12 +54,7 @@ const Sidebar = () => {
       icon: Users, 
       roles: ['user', 'manager', 'admin'] 
     },
-    { 
-      name: 'Settings', 
-      path: '/settings', 
-      icon: Settings, 
-      roles: ['admin'] 
-    },
+
   ];
 
   // Filter nav items by user role

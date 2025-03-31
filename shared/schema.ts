@@ -49,12 +49,19 @@ export const incidents = pgTable("incidents", {
   resolvedAt: timestamp("resolved_at"),
 });
 
-export const insertIncidentSchema = createInsertSchema(incidents).omit({
+// Create base schema without special date handling fields
+const baseInsertIncidentSchema = createInsertSchema(incidents).omit({
   id: true,
   incidentId: true,
   createdAt: true,
   updatedAt: true,
   resolvedAt: true,
+});
+
+// Extend the schema with custom date handling
+export const insertIncidentSchema = baseInsertIncidentSchema.extend({
+  // Allow ISO strings for dates and convert them to Date objects
+  dueDate: z.string().datetime().optional().transform(val => val ? new Date(val) : undefined),
 });
 
 export type InsertIncident = z.infer<typeof insertIncidentSchema>;

@@ -52,7 +52,7 @@ const Sidebar = () => {
       name: 'Teams', 
       path: '/teams', 
       icon: Users, 
-      roles: ['admin'] 
+      roles: ['user', 'manager', 'admin'] 
     },
     { 
       name: 'Settings', 

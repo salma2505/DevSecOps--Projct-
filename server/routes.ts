@@ -153,7 +153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Make sure createdBy is always included from the authenticated user
       // and that we're only passing valid fields to the schema parser
-      const incidentData = {
+      const incidentData: Record<string, any> = {
         title: req.body.title,
         description: req.body.description || "",
         status: req.body.status,

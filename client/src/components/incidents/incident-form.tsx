@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import CustomSelectItem from "@/components/ui/custom-select-item";
 import { 
   insertIncidentSchema, 
   priorityOptions, 
@@ -36,17 +37,15 @@ import {
 } from "@shared/schema";
 
 // Extend the schema with form validation
-const formSchema = insertIncidentSchema
-  .omit({ createdBy: true, resolvedAt: true })
-  .extend({
-    title: z.string().min(3, "Title must be at least 3 characters"),
-    description: z.string().min(10, "Description must be at least 10 characters").optional(),
-    dueDate: z.string().optional(),
-    status: z.string(),
-    priority: z.string(),
-    category: z.string(),
-    assignedTo: z.string().optional(),
-  });
+const formSchema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters").optional(),
+  dueDate: z.string().optional(),
+  status: z.string().min(1, "Status is required"),
+  priority: z.string().min(1, "Priority is required"),
+  category: z.string().min(1, "Category is required"),
+  assignedTo: z.string().optional(),
+});
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -59,7 +58,7 @@ const IncidentForm = ({ onClose }: IncidentFormProps) => {
   const { toast } = useToast();
 
   // Get teams for the assignment dropdown
-  const { data: teams = [], isLoading: isTeamsLoading } = useQuery<any[]>({
+  const { data: teams = [], isLoading: isTeamsLoading } = useQuery<{id: number, name: string}[]>({
     queryKey: ["/api/teams"],
   });
 
@@ -84,9 +83,12 @@ const IncidentForm = ({ onClose }: IncidentFormProps) => {
       const formattedData = {
         ...data,
         dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
-        assignedTo: data.assignedTo ? parseInt(data.assignedTo) : undefined,
+        assignedTo: data.assignedTo && !["_none", "_loading", "_empty", "_all"].includes(data.assignedTo)
+          ? parseInt(data.assignedTo) 
+          : undefined,
       };
 
+      console.log("Submitting incident data:", formattedData);
       const res = await apiRequest("POST", "/api/incidents", formattedData);
       return res.json();
     },
@@ -156,9 +158,9 @@ const IncidentForm = ({ onClose }: IncidentFormProps) => {
                   </FormControl>
                   <SelectContent>
                     {priorityOptions.map((priority) => (
-                      <SelectItem key={priority} value={priority}>
+                      <CustomSelectItem key={priority} value={priority}>
                         {priorityLabels[priority]}
-                      </SelectItem>
+                      </CustomSelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -184,9 +186,9 @@ const IncidentForm = ({ onClose }: IncidentFormProps) => {
                   </FormControl>
                   <SelectContent>
                     {categoryOptions.map((category) => (
-                      <SelectItem key={category} value={category}>
+                      <CustomSelectItem key={category} value={category}>
                         {categoryLabels[category]}
-                      </SelectItem>
+                      </CustomSelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -232,14 +234,14 @@ const IncidentForm = ({ onClose }: IncidentFormProps) => {
                   </FormControl>
                   <SelectContent>
                     {isTeamsLoading ? (
-                      <SelectItem value="loading">Loading teams...</SelectItem>
+                      <CustomSelectItem value="_loading">Loading teams...</CustomSelectItem>
                     ) : !teams || teams.length === 0 ? (
-                      <SelectItem value="none">No teams available</SelectItem>
+                      <CustomSelectItem value="_none">No teams available</CustomSelectItem>
                     ) : (
                       teams.map((team) => (
-                        <SelectItem key={team.id} value={team.id.toString()}>
+                        <CustomSelectItem key={team.id} value={team.id.toString()}>
                           {team.name}
-                        </SelectItem>
+                        </CustomSelectItem>
                       ))
                     )}
                   </SelectContent>
@@ -281,9 +283,9 @@ const IncidentForm = ({ onClose }: IncidentFormProps) => {
                 </FormControl>
                 <SelectContent>
                   {statusOptions.map((status) => (
-                    <SelectItem key={status} value={status}>
+                    <CustomSelectItem key={status} value={status}>
                       {statusLabels[status]}
-                    </SelectItem>
+                    </CustomSelectItem>
                   ))}
                 </SelectContent>
               </Select>

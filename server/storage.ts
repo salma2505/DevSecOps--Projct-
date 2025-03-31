@@ -153,9 +153,11 @@ export class MemStorage implements IStorage {
       createdBy: insertIncident.createdBy,
       createdAt: new Date(),
       updatedAt: new Date(),
-      dueDate: insertIncident.dueDate || null,
+      dueDate: insertIncident.dueDate ? new Date(insertIncident.dueDate) : null,
       resolvedAt: null
     };
+    
+    console.log("Creating incident:", incident);
     
     this.incidents.set(id, incident);
     return incident;

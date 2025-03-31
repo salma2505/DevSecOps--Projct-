@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import CustomSelectItem from "@/components/ui/custom-select-item";
 import { 
   priorityOptions, 
   priorityLabels, 
@@ -39,18 +40,24 @@ const IncidentFilters = ({ onFilterChange }: IncidentFiltersProps) => {
   };
 
   const handleStatusChange = (value: string) => {
-    setStatus(value);
-    updateFilters({ search, status: value, priority, category });
+    // Convert "_all" back to empty string for filtering
+    const actualValue = value === "_all" ? "" : value;
+    setStatus(actualValue);
+    updateFilters({ search, status: actualValue, priority, category });
   };
 
   const handlePriorityChange = (value: string) => {
-    setPriority(value);
-    updateFilters({ search, status, priority: value, category });
+    // Convert "_all" back to empty string for filtering
+    const actualValue = value === "_all" ? "" : value;
+    setPriority(actualValue);
+    updateFilters({ search, status, priority: actualValue, category });
   };
 
   const handleCategoryChange = (value: string) => {
-    setCategory(value);
-    updateFilters({ search, status, priority, category: value });
+    // Convert "_all" back to empty string for filtering
+    const actualValue = value === "_all" ? "" : value;
+    setCategory(actualValue);
+    updateFilters({ search, status, priority, category: actualValue });
   };
 
   const updateFilters = (filters: { search: string; status: string; priority: string; category: string }) => {
@@ -77,11 +84,11 @@ const IncidentFilters = ({ onFilterChange }: IncidentFiltersProps) => {
           <SelectValue placeholder="All Priorities" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Priorities</SelectItem>
+          <CustomSelectItem value="">All Priorities</CustomSelectItem>
           {priorityOptions.map(priority => (
-            <SelectItem key={priority} value={priority}>
+            <CustomSelectItem key={priority} value={priority}>
               {priorityLabels[priority]}
-            </SelectItem>
+            </CustomSelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -91,11 +98,11 @@ const IncidentFilters = ({ onFilterChange }: IncidentFiltersProps) => {
           <SelectValue placeholder="All Statuses" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Statuses</SelectItem>
+          <CustomSelectItem value="">All Statuses</CustomSelectItem>
           {statusOptions.map(status => (
-            <SelectItem key={status} value={status}>
+            <CustomSelectItem key={status} value={status}>
               {statusLabels[status]}
-            </SelectItem>
+            </CustomSelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -105,11 +112,11 @@ const IncidentFilters = ({ onFilterChange }: IncidentFiltersProps) => {
           <SelectValue placeholder="All Categories" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Categories</SelectItem>
+          <CustomSelectItem value="">All Categories</CustomSelectItem>
           {categoryOptions.map(category => (
-            <SelectItem key={category} value={category}>
+            <CustomSelectItem key={category} value={category}>
               {categoryLabels[category]}
-            </SelectItem>
+            </CustomSelectItem>
           ))}
         </SelectContent>
       </Select>

@@ -1,10 +1,25 @@
+# Use the official Node.js image
+FROM node:18
 
-FROM python:3.9-slim
+# Set working directory inside the container
 WORKDIR /app
-COPY ../../App_code/ /app/
-RUN pip install --no-cache-dir -r requirements.txt
-EXPOSE 5000
-ENV FLASK_APP=app.py
-CMD ["flask", "run", "--host=0.0.0.0"]
 
+# Copy dependency files and install
+COPY package*.json ./
+RUN npm install
+
+# Copy all remaining project files
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Install serve to run the app
+RUN npm install -g serve
+
+# Serve the built app
+CMD ["serve", "-s", "dist"]
+
+# Expose the port your app will run on
+EXPOSE 3000
 

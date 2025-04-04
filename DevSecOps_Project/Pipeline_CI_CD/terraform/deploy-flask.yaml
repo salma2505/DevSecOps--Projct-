@@ -1,0 +1,9 @@
+---
+- name: Déploiement de Flask sur Kubernetes
+  hosts: localhost
+  tasks:
+    - name: Appliquer le fichier de déploiement
+      command: kubectl apply -f flask-deployment.yaml
+
+    - name: Appliquer le fichier de service
+      command: kubectl apply -f flask-service.yaml

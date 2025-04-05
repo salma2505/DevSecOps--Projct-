@@ -1,6 +1,7 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
-import { Pool } from 'pg';
+import pg from 'pg';
+const { Pool } = pg;
 import { incidents, teams, users, type User, type Team, type Incident, type InsertUser, type InsertTeam, type InsertIncident } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";

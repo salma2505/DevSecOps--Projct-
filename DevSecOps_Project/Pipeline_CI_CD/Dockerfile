@@ -1,25 +1,35 @@
-# Use the official Node.js image
-FROM node:18
+# Stage 1: Build
+FROM node:20 AS builder
 
-# Set working directory inside the container
 WORKDIR /app
 
-# Copy dependency files and install
+# Install dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy all remaining project files
+# Copy the rest of the source code
 COPY . .
 
-# Build the application
+# Run database migrations
+RUN npm run db:push
+
+# Build app (backend + frontend if applicable)
 RUN npm run build
 
-# Install serve to run the app
-RUN npm install -g serve
+# Stage 2: Production image
+FROM node:20 AS production
 
-# Serve the built app
-CMD ["serve", "-s", "dist"]
+WORKDIR /app
 
-# Expose the port your app will run on
+# Copy built app from builder
+COPY --from=builder /app /app
+
+# Install only production dependencies
+RUN npm install --omit=dev
+
+# Expose port (change if different)
 EXPOSE 3000
+
+# Start the app
+CMD ["npm", "run", "start"]
 

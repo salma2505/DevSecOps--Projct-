@@ -1,0 +1,13 @@
+Assistant checkpoint: Updated drizzle config with proper Node.js types
+
+Assistant generated file changes:
+- drizzle.config.ts: Add proper Node.js type imports
+
+---
+
+User prompt:
+
+in my mchine i did the same and still et same rror conserning process
+
+Replit-Commit-Author: Assistant
+Replit-Commit-Session-Id: b687f300-ac89-4f4f-bb1d-4eab172475b1

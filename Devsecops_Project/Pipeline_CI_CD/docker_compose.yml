@@ -1,0 +1,30 @@
+
+services:
+  incident-manager:
+    image: salma2505/incidentshield:latest  # Use the image pushed to your registry
+    ports:
+      - "5000:5000"
+    env_file:
+      - ../App_code/IncidentManager/.env
+    working_dir: /app
+    volumes:
+      - ../App_code/IncidentManager:/app
+    networks:
+      - my_network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: chimchim95
+      POSTGRES_DB: incidentDB
+    ports:
+      - "5433:5432"
+    networks:
+      - my_network
+   
+networks:
+  my_network:
+    driver: bridge
+

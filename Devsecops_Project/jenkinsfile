@@ -25,7 +25,7 @@ pipeline {
 
     stage('Smoke Test') {
       steps {
-        echo '🔍 Testing app endpoint...'
+        echo 'Testing app endpoint...'
         sh 'curl -s http://localhost:5000 || echo "⚠️ App may not be responding."'
       }
     }
@@ -33,7 +33,7 @@ pipeline {
 
   post {
     always {
-      echo '🧹 Shutting down services...'
+      echo ' Shutting down services...'
       sh 'docker-compose down'
     }
   }

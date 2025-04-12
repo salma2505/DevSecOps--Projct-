@@ -8,7 +8,7 @@ pipeline {
   stages {
     stage('Pull Latest Images') {
       steps {
-        echo '📥 Pulling images from registry...'
+        echo '📥 Pulling pushed images from registry...'
         sh '''
           docker pull postgres:latest
           docker pull salma2505/incidentshield:latest

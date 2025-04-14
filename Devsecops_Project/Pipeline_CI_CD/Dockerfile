@@ -20,7 +20,7 @@ RUN npm install drizzle-kit
 # Copy drizzle config and schema files
 COPY App_code/IncidentManager/drizzle.config.ts ./drizzle.config.ts
 COPY App_code/IncidentManager/shared/schema.ts ./shared/schema.ts
-COPY App_code/IncidentManager/meta ./meta
+COPY ../App_code/IncidentManager/meta ./meta
 
 
 # Copy the rest of the app

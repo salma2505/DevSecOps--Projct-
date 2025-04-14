@@ -21,8 +21,7 @@ RUN npm install drizzle-kit
 COPY ../App_code/IncidentManager/drizzle.config.ts ./drizzle.config.ts
 COPY ../App_code/IncidentManager/shared/schema.ts ./shared/schema.ts
 
-# Run drizzle migration (this will make use of the .env file for DATABASE_URL)
-RUN ./node_modules/.bin/drizzle-kit push --config ./drizzle.config.ts
+
 
 # Copy the rest of the app
 COPY ../App_code/IncidentManager ./

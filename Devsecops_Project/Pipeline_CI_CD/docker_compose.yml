@@ -26,5 +26,6 @@ services:
    
 networks:
   my_network:
+    name: pipeline_ci_cd_my_network  
     driver: bridge
 

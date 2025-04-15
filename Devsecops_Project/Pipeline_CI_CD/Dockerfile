@@ -29,7 +29,7 @@ COPY ../App_code/IncidentManager ./
 # Ensure binaries like vite and esbuild are executable
 RUN chmod +x ./node_modules/.bin/vite && chmod +x ./node_modules/.bin/esbuild
 
-# Build the app (if applicable)
+# Build the app 
 RUN npm run build
 
 # Expose the port your app runs on (default 5000)

@@ -12,42 +12,34 @@ spec:
       labels:
         app: incident-manager
       annotations:
-        vault.hashicorp.com/agent-inject: "true"  # Enable Vault Agent injection
-        vault.hashicorp.com/role: "incident-manager"  # Vault role to bind the service account to
-        vault.hashicorp.com/agent-inject-secret-DATABASE_URL: "secret/incident-manager"  # Path to the secret
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "incident-manager"
+        vault.hashicorp.com/agent-inject-secret-DATABASE_URL: "secret/incident-manager"
         vault.hashicorp.com/agent-inject-template-DATABASE_URL: |
           {{- with secret "secret/incident-manager" -}}
           DATABASE_URL=postgresql://{{ .Data.data.username }}:{{ .Data.data.password }}@incident-db:5432/incidentDB
           {{- end }}
     spec:
-      serviceAccountName: vault-auth  # This should match the service account you created
+      serviceAccountName: vault-auth
       initContainers:
         - name: run-migrations
           image: salma2505/incidentshield:latest
-          command: ["npx", "drizzle-kit", "migrate"]
-          env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: vault-secrets  # This should refer to the Kubernetes Secret injected by Vault
-                  key: DATABASE_URL
+          command: ["/bin/sh", "-c", "source /vault/secrets/DATABASE_URL && npx drizzle-kit migrate"]
+          volumeMounts:
+            - name: vault-agent-vol
+              mountPath: /vault/secrets
       containers:
         - name: incident-manager
           image: salma2505/incidentshield:latest
           ports:
             - containerPort: 5000
-          env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: vault-secrets  # This should refer to the Kubernetes Secret injected by Vault
-                  key: DATABASE_URL
+          command: ["/bin/sh", "-c", "source /vault/secrets/DATABASE_URL && exec npm start"]
           volumeMounts:
-            - name: vault-secret
+            - name: vault-agent-vol
               mountPath: /vault/secrets
               readOnly: true
       volumes:
-        - name: vault-secret
+        - name: vault-agent-vol
           emptyDir: {}
 ---
 apiVersion: v1

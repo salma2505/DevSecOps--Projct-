@@ -1,7 +1,7 @@
 
 services:
   incident-manager:
-    image: salma2505/incidentshield:latest  # Use the image pushed to your registry
+    image: salma2505/incidentshield:latest  
     ports:
       - "5000:5000"
     env_file:

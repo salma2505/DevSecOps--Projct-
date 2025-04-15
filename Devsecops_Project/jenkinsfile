@@ -1,41 +1,39 @@
 pipeline {
   agent any
 
-  environment {
-    COMPOSE_FILE = 'docker_compose.yml'
-  }
-
   stages {
-    stage('Pull Latest Images') {
+    stage('Checkout') {
       steps {
-        echo '📥 Pulling pushed images from registry...'
-        sh '''
-          docker pull postgres:latest
-          docker pull salma2505/incidentshield:latest
-        '''
+        git branch: 'main', credentialsId:'github-creds', url: 'https://github.com/salma2505/DevSecOps--Projct-.git'
       }
     }
 
-    stage('Start with Docker Compose') {
+    stage('Build') {
       steps {
-        echo '🚀 Launching services with docker-compose...'
-        sh 'docker-compose up -d'
+          dir('Devsecops_Project'){
+              sh 'docker build -t salma2505/incidentshield:latest -f Pipeline_CI_CD/Dockerfile .'
+          }
       }
     }
 
-    stage('Smoke Test') {
+    stage('Push') {
       steps {
-        echo 'Testing app endpoint...'
-        sh 'curl -s http://localhost:5000 || echo "⚠️ App may not be responding."'
+        withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+          sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+          sh 'docker push salma2505/incidentshield:latest'
+        }
       }
     }
-  }
 
-  post {
-    always {
-      echo ' Shutting down services...'
-      sh 'docker-compose down'
+    stage('Deploy to K8s') {
+      steps {
+          withCredentials([file(credentialsId: 'kubeconfig-host-to-vm', variable: 'KUBECONFIG_FILE')]) {
+              script {
+                  env.KUBECONFIG = KUBECONFIG_FILE
+                  sh 'kubectl apply -f Devsecops_Project/Pipeline_CI_CD/kubernetes/'
+              }
+          }
+      }
     }
-  }
+  }    
 }
-

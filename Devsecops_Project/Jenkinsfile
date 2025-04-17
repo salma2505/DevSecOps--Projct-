@@ -1,39 +1,72 @@
 pipeline {
-  agent any
+    agent any
 
-  stages {
-    stage('Checkout') {
-      steps {
-        git branch: 'main', credentialsId:'github-creds', url: 'https://github.com/salma2505/DevSecOps--Projct-.git'
-      }
+    environment {
+        SONARQUBE = 'sonarqube'  // Jenkins SonarQube server name
     }
 
-    stage('Build') {
-      steps {
-          dir('Devsecops_Project'){
-              sh 'docker build -t salma2505/incidentshield:latest -f Pipeline_CI_CD/Dockerfile .'
-          }
-      }
-    }
-
-    stage('Push') {
-      steps {
-        withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-          sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
-          sh 'docker push salma2505/incidentshield:latest'
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', credentialsId: 'github-creds', url: 'https://github.com/salma2505/DevSecOps--Projct-.git'
+            }
         }
-      }
-    }
 
-    stage('Deploy to K8s') {
-      steps {
-          withCredentials([file(credentialsId: 'kubeconfig-host-to-vm', variable: 'KUBECONFIG_FILE')]) {
-              script {
-                  env.KUBECONFIG = KUBECONFIG_FILE
-                  sh 'kubectl apply -f Devsecops_Project/Pipeline_CI_CD/kubernetes/'
-              }
-          }
-      }
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_AUTH_TOKEN')]) {
+                        sh '''
+                            npm install
+                            npm test || true  # Optional: if you don't want tests to fail pipeline
+                            npx sonar-scanner \
+                                -Dsonar.projectKey=incident-manager\
+                                -Dsonar.sources=. \
+                                -Dsonar.host.url=$SONAR_HOST_URL \
+                                -Dsonar.login=$SONAR_AUTH_TOKEN
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Snyk Vulnerability Scan') {
+            steps {
+                script {
+                    sh 'npm install'
+                    sh 'snyk test --all-projects'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                dir('Devsecops_Project') {
+                    sh 'docker build -t salma2505/incidentshield:latest -f Pipeline_CI_CD/Dockerfile .'
+                }
+            }
+        }
+
+        stage('Push to DockerHub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push salma2505/incidentshield:latest
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                withCredentials([file(credentialsId: 'kubeconfig-host-to-vm', variable: 'KUBECONFIG_FILE')]) {
+                    script {
+                        env.KUBECONFIG = KUBECONFIG_FILE
+                        sh 'kubectl apply -f Devsecops_Project/Pipeline_CI_CD/kubernetes/'
+                    }
+                }
+            }
+        }
     }
-  }    
 }

@@ -11,36 +11,23 @@ spec:
     metadata:
       labels:
         app: incident-manager
-      annotations:
-        vault.hashicorp.com/agent-inject: "true"
-        vault.hashicorp.com/role: "incident-manager"
-        vault.hashicorp.com/agent-inject-secret-DATABASE_URL: "secret/incident-manager"
-        vault.hashicorp.com/agent-inject-template-DATABASE_URL: |
-          {{- with secret "secret/incident-manager" -}}
-          DATABASE_URL=postgresql://{{ .Data.data.username }}:{{ .Data.data.password }}@incident-db:5432/incidentDB
-          {{- end }}
     spec:
-      serviceAccountName: vault-auth
       initContainers:
         - name: run-migrations
           image: salma2505/incidentshield:latest
-          command: ["/bin/sh", "-c", "source /vault/secrets/DATABASE_URL && npx drizzle-kit migrate"]
-          volumeMounts:
-            - name: vault-agent-vol
-              mountPath: /vault/secrets
+          command: ["npx", "drizzle-kit", "migrate"]
+          env:
+            - name: DATABASE_URL
+              value: postgresql://postgres:chimchim95@incident-db:5432/incidentDB
+
       containers:
         - name: incident-manager
           image: salma2505/incidentshield:latest
           ports:
             - containerPort: 5000
-          command: ["/bin/sh", "-c", "source /vault/secrets/DATABASE_URL && exec npm start"]
-          volumeMounts:
-            - name: vault-agent-vol
-              mountPath: /vault/secrets
-              readOnly: true
-      volumes:
-        - name: vault-agent-vol
-          emptyDir: {}
+          env:
+            - name: DATABASE_URL
+              value: postgresql://postgres:chimchim95@incident-db:5432/incidentDB
 ---
 apiVersion: v1
 kind: Service
@@ -53,4 +40,4 @@ spec:
   ports:
     - port: 5000
       targetPort: 5000
-      nodePort: 30000
+      nodePort: 30002

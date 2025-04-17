@@ -17,7 +17,7 @@ pipeline {
                 withSonarQubeEnv('sonarqube') {
                     withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_AUTH_TOKEN')]) {
                         script{
-                            dir('Devsecops_Project/App_code/incidentmanager') {
+                            dir('Devsecops_Project/App_code/IncidentManager') {
                                  sh '''
                                       npm install
                                       npm test || true  # Optional: if you don't want tests to fail pipeline

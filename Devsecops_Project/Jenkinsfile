@@ -16,19 +16,23 @@ pipeline {
             steps {
                 withSonarQubeEnv('sonarqube') {
                     withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_AUTH_TOKEN')]) {
-                        sh '''
-                            npm install
-                            npm test || true  # Optional: if you don't want tests to fail pipeline
-                            npx sonar-scanner \
-                                -Dsonar.projectKey=incident-manager\
-                                -Dsonar.sources=. \
-                                -Dsonar.host.url=$SONAR_HOST_URL \
-                                -Dsonar.login=$SONAR_AUTH_TOKEN
-                        '''
+                        script{
+                            dir('Devsecops_Project/App_code/incidentmanager') {
+                                 sh '''
+                                      npm install
+                                      npm test || true  # Optional: if you don't want tests to fail pipeline
+                                      npx sonar-scanner \
+                                          -Dsonar.projectKey=incident-manager\
+                                          -Dsonar.sources=. \
+                                          -Dsonar.host.url=$SONAR_HOST_URL \
+                                          -Dsonar.login=$SONAR_AUTH_TOKEN
+                                 '''
+                            }
+                        }
                     }
                 }
             }
-        }
+        }    
         //snyk stage 
         stage('Snyk Vulnerability Scan') {
             steps {

@@ -4,7 +4,6 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Install necessary packages globally (like typescript, ts-node, tsx)
 RUN npm install -g typescript ts-node tsx
 
 # Copy package files and install dependencies

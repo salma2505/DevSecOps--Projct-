@@ -29,7 +29,7 @@ pipeline {
                 }
             }
         }
-
+        //snyk stage 
         stage('Snyk Vulnerability Scan') {
             steps {
                 script {

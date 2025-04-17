@@ -20,7 +20,7 @@ pipeline {
                             dir('Devsecops_Project/App_code/IncidentManager') {
                                  sh '''
                                       npm install
-                                      npm test || true  # Optional: if you don't want tests to fail pipeline
+                                      npm test || true  
                                       npx sonar-scanner \
                                           -Dsonar.projectKey=incident-manager\
                                           -Dsonar.sources=. \

@@ -11,7 +11,7 @@ pipeline {
                 git branch: 'main', credentialsId: 'github-creds', url: 'https://github.com/salma2505/DevSecOps--Projct-.git'
             }
         }
-
+        //sonar stage
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonarqube') {

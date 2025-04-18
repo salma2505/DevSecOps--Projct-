@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE = 'sonarqube'  
+        SONARQUBE = 'sonarqube'
     }
 
     stages {
@@ -11,28 +11,41 @@ pipeline {
                 git branch: 'main', credentialsId: 'github-creds', url: 'https://github.com/salma2505/DevSecOps--Projct-.git'
             }
         }
-        //sonar stage
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonarqube') {
                     withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_AUTH_TOKEN')]) {
-                        script{
+                        script {
                             dir('Devsecops_Project/App_code/IncidentManager') {
-                                 sh '''
-                                      npm install                  
-                                      npx sonar-scanner \
-                                          -Dsonar.projectKey=incident-manager\
-                                          -Dsonar.sources=. \
-                                          -Dsonar.host.url=$SONAR_HOST_URL \
-                                          -Dsonar.login=$SONAR_AUTH_TOKEN
-                                 '''
+                                try {
+                                    sh '''
+                                        npm install                  
+                                        npx sonar-scanner \
+                                            -Dsonar.projectKey=Project \
+                                            -Dsonar.sources=. \
+                                            -Dsonar.host.url=$SONAR_HOST_URL \
+                                            -Dsonar.login=$SONAR_AUTH_TOKEN \
+                                            -Dsonar.javascript.node.maxspace=1024
+                                    '''
+                                    slackSend(
+                                        color: '#36a64f',
+                                        message: "*SonarQube analysis succeeded* for `${env.JOB_NAME}` <${env.BUILD_URL}|#${env.BUILD_NUMBER}> ✅"
+                                    )
+                                } catch (err) {
+                                    slackSend(
+                                        color: '#ff0000',
+                                        message: "*SonarQube analysis failed* for `${env.JOB_NAME}` <${env.BUILD_URL}|#${env.BUILD_NUMBER}> ❌"
+                                    )
+                                    error "SonarQube scan failed: ${err}"
+                                }
                             }
                         }
                     }
                 }
             }
-        }    
-        //snyk stage 
+        }
+
         stage('Snyk Vulnerability Scan') {
             steps {
                 script {

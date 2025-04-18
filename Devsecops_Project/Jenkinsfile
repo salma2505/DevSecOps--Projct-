@@ -73,7 +73,7 @@ pipeline {
                 }
             }
         }
-
+        //deployment stage 
         stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig-host-to-vm', variable: 'KUBECONFIG_FILE')]) {

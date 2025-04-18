@@ -20,7 +20,7 @@ pipeline {
                             dir('Devsecops_Project/App_code/IncidentManager') {
                                 try {
                                     sh '''
-                                        npm install                  
+                                        npm install                   
                                         npx sonar-scanner \
                                             -Dsonar.projectKey=Project \
                                             -Dsonar.sources=. \
@@ -35,16 +35,16 @@ pipeline {
                                                 "text": "✅ SonarQube analysis completed successfully!"
                                             }' $SLACK_WEBHOOK
                                         """
-                                    
+                                    }
                                 } catch (err) {
-                                    withCredentials([string(credentialsId: 'slack_webhook_url', variable: 'SLACK_WEBHOOK')]) {
-    
-                                    ssh """
+                                    withCredentials([string(credentialsId: 'slack_url', variable: 'SLACK_WEBHOOK')]) {
+                                        sh """
                                             curl -X POST -H 'Content-type: application/json' --data '{
                                                 "channel": "#devsecops",
                                                 "text": "❌ SonarQube analysis failed: ${err}"
                                             }' $SLACK_WEBHOOK
                                         """
+                                    }
                                     error "SonarQube scan failed: ${err}"
                                 }
                             }
@@ -57,13 +57,13 @@ pipeline {
         stage('Snyk Vulnerability Scan') {
             steps {
                 dir('Devsecops_Project/App_code/IncidentManager') {
-                script {
-                    sh 'npm install'
-                    sh 'snyk test --all-projects'
+                    script {
+                        sh 'npm install'
+                        sh 'snyk test --all-projects'
+                    }
                 }
             }
-        }
-    }      
+        }      
 
         stage('Build Docker Image') {
             steps {

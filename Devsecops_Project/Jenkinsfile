@@ -29,11 +29,13 @@ pipeline {
                                             -Dsonar.javascript.node.maxspace=1024
                                     '''
                                     slackSend(
+                                        channel: '#devsecops'
                                         color: '#36a64f',
                                         message: "*SonarQube analysis succeeded* for `${env.JOB_NAME}` <${env.BUILD_URL}|#${env.BUILD_NUMBER}> ✅"
                                     )
                                 } catch (err) {
                                     slackSend(
+                                        channel: '#devsecops'
                                         color: '#ff0000',
                                         message: "*SonarQube analysis failed* for `${env.JOB_NAME}` <${env.BUILD_URL}|#${env.BUILD_NUMBER}> ❌"
                                     )

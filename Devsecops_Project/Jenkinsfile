@@ -28,19 +28,23 @@ pipeline {
                                             -Dsonar.login=$SONAR_AUTH_TOKEN \
                                             -Dsonar.javascript.node.maxspace=1024
                                     '''
-                                    slackSend(
-                                        channel: '#devsecops',
-                                        color: '#36a64f',
-                                        message: 'Test message from Jenkins pipeline',
-                                        tokenCredentialId: 'slackalerts_token'
-                                    )
+                                    withCredentials([string(credentialsId: 'slack_url', variable: 'SLACK_WEBHOOK')]) {
+                                        sh """
+                                            curl -X POST -H 'Content-type: application/json' --data '{
+                                                "channel": "#devsecops",
+                                                "text": "✅ SonarQube analysis completed successfully!"
+                                            }' $SLACK_WEBHOOK
+                                        """
+                                    
                                 } catch (err) {
-                                    slackSend(
-                                        channel: '#devsecops',
-                                        color: '#ff0000',
-                                        message: 'Test message from Jenkins pipeline',
-                                        tokenCredentialId: 'slackalerts_token'
-                                    )
+                                    withCredentials([string(credentialsId: 'slack_webhook_url', variable: 'SLACK_WEBHOOK')]) {
+    
+                                    ssh """
+                                            curl -X POST -H 'Content-type: application/json' --data '{
+                                                "channel": "#devsecops",
+                                                "text": "❌ SonarQube analysis failed: ${err}"
+                                            }' $SLACK_WEBHOOK
+                                        """
                                     error "SonarQube scan failed: ${err}"
                                 }
                             }

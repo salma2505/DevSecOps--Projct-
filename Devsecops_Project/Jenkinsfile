@@ -19,7 +19,7 @@ pipeline {
                         script{
                             dir('Devsecops_Project/App_code/IncidentManager') {
                                  sh '''
-                                      npm install
+                                      npm install                 //remove test part 
                                       npx sonar-scanner \
                                           -Dsonar.projectKey=incident-manager\
                                           -Dsonar.sources=. \

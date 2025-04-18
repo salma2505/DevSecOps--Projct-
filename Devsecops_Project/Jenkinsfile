@@ -3,12 +3,51 @@ pipeline {
 
     environment {
         SONARQUBE = 'sonarqube'
+        SLACK_WEBHOOK = credentials('slack-webhook-url') // Use the webhook URL from Jenkins credentials
     }
 
     stages {
         stage('Checkout') {
             steps {
                 git branch: 'main', credentialsId: 'github-creds', url: 'https://github.com/salma2505/DevSecOps--Projct-.git'
+            }
+        }
+
+        stage('Check for Secrets with GitLeaks') {
+            steps {
+                script {
+                    try {
+                        // Run GitLeaks to scan for secrets
+                        sh 'gitleaks --path=. --config-path=.gitleaks.toml --report=gitleaks-report.json'
+                        
+                        // Read the report to check for secrets
+                        def secretsFound = readFile('gitleaks-report.json')
+                        
+                        // If secrets are found, notify via Webhook
+                        if (secretsFound.contains('SECRET DETECTED')) {
+                            sh """
+                                curl -X POST -H 'Content-type: application/json' --data '{
+                                    "channel": "#devsecops",
+                                    "text": "❌ Secrets detected in the codebase! Please review the Gitleaks report."
+                                }' $SLACK_WEBHOOK
+                            """
+                        } else {
+                            sh """
+                                curl -X POST -H 'Content-type: application/json' --data '{
+                                    "channel": "#devsecops",
+                                    "text": "✅ No secrets detected in the codebase."
+                                }' $SLACK_WEBHOOK
+                            """
+                        }
+                    } catch (err) {
+                        sh """
+                            curl -X POST -H 'Content-type: application/json' --data '{
+                                "channel": "#devsecops",
+                                "text": "❌ Error during secret scanning: ${err}"
+                            }' $SLACK_WEBHOOK
+                        """
+                    }
+                }
             }
         }
 
@@ -20,7 +59,7 @@ pipeline {
                             dir('Devsecops_Project/App_code/IncidentManager') {
                                 try {
                                     sh '''
-                                        npm install                   
+                                        npm install                  
                                         npx sonar-scanner \
                                             -Dsonar.projectKey=Project \
                                             -Dsonar.sources=. \
@@ -28,24 +67,19 @@ pipeline {
                                             -Dsonar.login=$SONAR_AUTH_TOKEN \
                                             -Dsonar.javascript.node.maxspace=1024
                                     '''
-                                    withCredentials([string(credentialsId: 'slack_url', variable: 'SLACK_WEBHOOK')]) {
-                                        sh """
-                                            curl -X POST -H 'Content-type: application/json' --data '{
-                                                "channel": "#devsecops",
-                                                "text": "✅ SonarQube analysis completed successfully!"
-                                            }' $SLACK_WEBHOOK
-                                        """
-                                    }
+                                    sh """
+                                        curl -X POST -H 'Content-type: application/json' --data '{
+                                            "channel": "#devsecops",
+                                            "text": "✅ SonarQube analysis completed successfully!"
+                                        }' $SLACK_WEBHOOK
+                                    """
                                 } catch (err) {
-                                    withCredentials([string(credentialsId: 'slack_url', variable: 'SLACK_WEBHOOK')]) {
-                                        sh """
-                                            curl -X POST -H 'Content-type: application/json' --data '{
-                                                "channel": "#devsecops",
-                                                "text": "❌ SonarQube analysis failed: ${err}"
-                                            }' $SLACK_WEBHOOK
-                                        """
-                                    }
-                                    error "SonarQube scan failed: ${err}"
+                                    sh """
+                                        curl -X POST -H 'Content-type: application/json' --data '{
+                                            "channel": "#devsecops",
+                                            "text": "❌ SonarQube analysis failed: ${err}"
+                                        }' $SLACK_WEBHOOK
+                                    """
                                 }
                             }
                         }
@@ -58,8 +92,40 @@ pipeline {
             steps {
                 dir('Devsecops_Project/App_code/IncidentManager') {
                     script {
-                        sh 'npm install'
-                        sh 'snyk test --all-projects'
+                        try {
+                            // Run Snyk vulnerability test and output the results to JSON
+                            sh 'snyk test --all-projects --json > snyk-report.json'
+                            
+                            // Read the Snyk report to check if vulnerabilities are found
+                            def snykReport = readFile('snyk-report.json')
+                            def snykResults = readJSON text: snykReport
+
+                            // Check for vulnerabilities and alert via webhook
+                            if (snykResults.vulnerabilities.size() > 0) {
+                                def message = "❌ Snyk found vulnerabilities in the project! Please review the Snyk report."
+                                sh """
+                                    curl -X POST -H 'Content-type: application/json' --data '{
+                                        "channel": "#devsecops",
+                                        "text": "$message"
+                                    }' $SLACK_WEBHOOK
+                                """
+                            } else {
+                                def message = "✅ No vulnerabilities found in the project."
+                                sh """
+                                    curl -X POST -H 'Content-type: application/json' --data '{
+                                        "channel": "#devsecops",
+                                        "text": "$message"
+                                    }' $SLACK_WEBHOOK
+                                """
+                            }
+                        } catch (err) {
+                            sh """
+                                curl -X POST -H 'Content-type: application/json' --data '{
+                                    "channel": "#devsecops",
+                                    "text": "❌ Snyk scan failed: ${err}"
+                                }' $SLACK_WEBHOOK
+                            """
+                        }
                     }
                 }
             }

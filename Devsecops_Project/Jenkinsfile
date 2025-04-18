@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         SONARQUBE = 'sonarqube'
-        SLACK_WEBHOOK = credentials('slack_url') // Use the webhook URL from Jenkins credentials
+        SLACK_WEBHOOK = credentials('slack_url') /
     }
 
     stages {

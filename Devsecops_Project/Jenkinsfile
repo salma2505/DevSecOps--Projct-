@@ -18,7 +18,7 @@ pipeline {
                 script {
                     try {
                         
-                        sh 'gitleaks detect --source=. --config=../.gitleaks.toml --report-path=gitleaks-report.json'
+                        sh 'gitleaks detect --source=. --config=Devsecops-Project/.gitleaks.toml --report-path=gitleaks-report.json'
                         
                         // Read the report to check for secrets
                         def secretsFound = readFile('gitleaks-report.json')

@@ -17,7 +17,7 @@ pipeline {
             steps {
                 script {
                     try {
-                        // Run GitLeaks to scan for secrets
+                        
                         sh 'gitleaks --path=. --config-path=.gitleaks.toml --report=gitleaks-report.json'
                         
                         // Read the report to check for secrets

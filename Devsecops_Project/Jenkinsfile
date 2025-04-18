@@ -31,13 +31,15 @@ pipeline {
                                     slackSend(
                                         channel: '#devsecops',
                                         color: '#36a64f',
-                                        message: "*SonarQube analysis succeeded* for `${env.JOB_NAME}` <${env.BUILD_URL}|#${env.BUILD_NUMBER}> ✅"
+                                        message: 'Test message from Jenkins pipeline',
+                                        tokenCredentialId: 'slackalerts_token'
                                     )
                                 } catch (err) {
                                     slackSend(
                                         channel: '#devsecops',
                                         color: '#ff0000',
-                                        message: "*SonarQube analysis failed* for `${env.JOB_NAME}` <${env.BUILD_URL}|#${env.BUILD_NUMBER}> ❌"
+                                        message: 'Test message from Jenkins pipeline',
+                                        tokenCredentialId: 'slackalerts_token'
                                     )
                                     error "SonarQube scan failed: ${err}"
                                 }
@@ -50,12 +52,14 @@ pipeline {
 
         stage('Snyk Vulnerability Scan') {
             steps {
+                dir('Devsecops_Project/App_code/IncidentManager') {
                 script {
                     sh 'npm install'
                     sh 'snyk test --all-projects'
                 }
             }
         }
+    }      
 
         stage('Build Docker Image') {
             steps {

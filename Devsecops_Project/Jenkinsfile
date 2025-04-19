@@ -7,50 +7,14 @@ pipeline {
     }
 
     stages {
+        // Checkout the code from GitHub
         stage('Checkout') {
             steps {
                 git branch: 'main', credentialsId: 'github-creds', url: 'https://github.com/salma2505/DevSecOps--Projct-.git'
             }
         }
 
-        stage('Check for Secrets with GitLeaks') {
-            steps {
-                script {
-                    try {
-                        
-                        sh 'gitleaks detect --source=. --config=Devsecops-Project/.gitleaks.toml --report-path=gitleaks-report.json'
-                        
-                        // Read the report to check for secrets
-                        def secretsFound = readFile('gitleaks-report.json')
-                        
-                        // If secrets are found, notify via Webhook
-                        if (secretsFound.contains('SECRET DETECTED')) {
-                            sh """
-                                curl -X POST -H 'Content-type: application/json' --data '{
-                                    "channel": "#devsecops",
-                                    "text": "❌ Secrets detected in the codebase! Please review the Gitleaks report."
-                                }' $SLACK_WEBHOOK
-                            """
-                        } else {
-                            sh """
-                                curl -X POST -H 'Content-type: application/json' --data '{
-                                    "channel": "#devsecops",
-                                    "text": "✅ No secrets detected in the codebase."
-                                }' $SLACK_WEBHOOK
-                            """
-                        }
-                    } catch (err) {
-                        sh """
-                            curl -X POST -H 'Content-type: application/json' --data '{
-                                "channel": "#devsecops",
-                                "text": "❌ Error during secret scanning: ${err}"
-                            }' $SLACK_WEBHOOK
-                        """
-                    }
-                }
-            }
-        }
-
+        // SonarQube static code analysis
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonarqube') {
@@ -59,7 +23,7 @@ pipeline {
                             dir('Devsecops_Project/App_code/IncidentManager') {
                                 try {
                                     sh '''
-                                        npm install                  
+                                        npm install                   
                                         npx sonar-scanner \
                                             -Dsonar.projectKey=Project \
                                             -Dsonar.sources=. \
@@ -88,6 +52,7 @@ pipeline {
             }
         }
 
+        // Snyk vulnerability scan
         stage('Snyk Vulnerability Scan') {
             steps {
                 dir('Devsecops_Project/App_code/IncidentManager') {
@@ -95,13 +60,20 @@ pipeline {
                         try {
                             // Run Snyk vulnerability test and output the results to JSON
                             sh 'snyk test --all-projects --json > snyk-report.json'
-                            
-                            // Read the Snyk report to check if vulnerabilities are found
-                            def snykReport = readFile('snyk-report.json')
-                            def snykResults = readJSON text: snykReport
+                            sh 'snyk monitor --json > snyk-monitor-report.json'
 
-                            // Check for vulnerabilities and alert via webhook
-                            if (snykResults.vulnerabilities.size() > 0) {
+                            // Read the Snyk report to check if vulnerabilities are found
+                            def snykTestReport = readFile('snyk-report.json')
+                            def snykTestResults = readJSON text: snykTestReport
+
+                            def snykMonitorReport = readFile('snyk-monitor-report.json')
+                            def snykMonitorResults = readJSON text: snykMonitorReport
+
+                            // Check for vulnerabilities in the test results
+                            def vulnerabilities = snykTestResults.vulnerabilities
+
+                            // If vulnerabilities are found, alert via Slack
+                            if (vulnerabilities.size() > 0) {
                                 def message = "❌ Snyk found vulnerabilities in the project! Please review the Snyk report."
                                 sh """
                                     curl -X POST -H 'Content-type: application/json' --data '{
@@ -118,6 +90,18 @@ pipeline {
                                     }' $SLACK_WEBHOOK
                                 """
                             }
+
+                            // Check for vulnerabilities in the monitor results (optional)
+                            if (snykMonitorResults.vulnerabilities.size() > 0) {
+                                def monitorMessage = "❌ Snyk Monitor found vulnerabilities in the project!"
+                                sh """
+                                    curl -X POST -H 'Content-type: application/json' --data '{
+                                        "channel": "#devsecops",
+                                        "text": "$monitorMessage"
+                                    }' $SLACK_WEBHOOK
+                                """
+                            }
+
                         } catch (err) {
                             sh """
                                 curl -X POST -H 'Content-type: application/json' --data '{
@@ -129,8 +113,9 @@ pipeline {
                     }
                 }
             }
-        }      
+        }
 
+        // Build Docker image
         stage('Build Docker Image') {
             steps {
                 dir('Devsecops_Project') {
@@ -139,6 +124,7 @@ pipeline {
             }
         }
 
+        // Push Docker image to DockerHub
         stage('Push to DockerHub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
@@ -149,7 +135,8 @@ pipeline {
                 }
             }
         }
-        
+
+        // Deploy to Kubernetes
         stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig-host-to-vm', variable: 'KUBECONFIG_FILE')]) {

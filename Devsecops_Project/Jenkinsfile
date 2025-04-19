@@ -58,32 +58,17 @@ pipeline {
                             sh 'snyk test --all-projects --json > snyk-report.json'
                             sh 'snyk monitor --all-projects --json > snyk-monitor-report.json'
 
-                            def snykTestReport = readFile('snyk-report.json')
-                            def snykTestResults = readJSON text: snykTestReport
-                            def vulnerabilities = snykTestResults.vulnerabilities
-
-                            def snykMonitorReport = readFile('snyk-monitor-report.json')
-                            def snykMonitorResults = readJSON text: snykMonitorReport
-
-                            def monitoredProjectsSummary = snykMonitorResults.collect { proj ->
-                                "🔍 *${proj.projectName}* → ${proj.uri}"
-                            }.join("\\n")
-
-                            def message = vulnerabilities?.size() > 0 ?
-                                "❌ *Snyk found vulnerabilities in the project!*\n\n${monitoredProjectsSummary}" :
-                                "✅ *No vulnerabilities found in the project.*\n\n${monitoredProjectsSummary}"
-
                             sh """
                                 curl -X POST -H 'Content-type: application/json' --data '{
                                     "channel": "#devsecops",
-                                    "text": "${message}"
+                                    "text": "🔎 Snyk scan completed. Please check snyk Dashboard and the Jenkins artifacts for the vulnerability reports."
                                 }' ${SLACK_WEBHOOK}
                             """
                         } catch (err) {
                             sh """
                                 curl -X POST -H 'Content-type: application/json' --data '{
                                     "channel": "#devsecops",
-                                    "text": "❌ Snyk scan failed: ${err}"
+                                    "text": "❌ Snyk scan failed. Check Jenkins logs for more info."
                                 }' ${SLACK_WEBHOOK}
                             """
                         }
@@ -120,6 +105,12 @@ pipeline {
                     }
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/snyk-*.json', fingerprint: true
         }
     }
 }

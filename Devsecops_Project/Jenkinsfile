@@ -3,47 +3,44 @@ pipeline {
 
     environment {
         SONARQUBE = 'sonarqube'
-        SLACK_WEBHOOK = credentials('slack_url') 
+        SLACK_WEBHOOK = credentials('slack_url')
     }
 
     stages {
-        // Checkout the code from GitHub
         stage('Checkout') {
             steps {
                 git branch: 'main', credentialsId: 'github-creds', url: 'https://github.com/salma2505/DevSecOps--Projct-.git'
             }
         }
 
-        // SonarQube static code analysis
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonarqube') {
+                withSonarQubeEnv("${SONARQUBE}") {
                     withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_AUTH_TOKEN')]) {
-                        script {
-                            dir('Devsecops_Project/App_code/IncidentManager') {
+                        dir('Devsecops_Project/App_code/IncidentManager') {
+                            script {
                                 try {
                                     sh '''
-                                        npm install                   
+                                        npm install
                                         npx sonar-scanner \
-                                            -Dsonar.projectKey=Project \
-                                            -Dsonar.sources=. \
-                                            -Dsonar.host.url=$SONAR_HOST_URL \
-                                            -Dsonar.token=$SONAR_AUTH_TOKEN \
-                                            -Dsonar.javascript.node.maxspace=1024
+                                          -Dsonar.projectKey=Project \
+                                          -Dsonar.sources=. \
+                                          -Dsonar.host.url=$SONAR_HOST_URL \
+                                          -Dsonar.token=$SONAR_AUTH_TOKEN \
+                                          -Dsonar.javascript.node.maxspace=1024
                                     '''
                                     sh """
                                         curl -X POST -H 'Content-type: application/json' --data '{
                                             "channel": "#devsecops",
                                             "text": "✅ SonarQube analysis completed successfully!"
-                                        }' $SLACK_WEBHOOK
+                                        }' ${SLACK_WEBHOOK}
                                     """
                                 } catch (err) {
-                                    
                                     sh """
                                         curl -X POST -H 'Content-type: application/json' --data '{
                                             "channel": "#devsecops",
                                             "text": "❌ SonarQube analysis failed: ${err}"
-                                        }' $SLACK_WEBHOOK
+                                        }' ${SLACK_WEBHOOK}
                                     """
                                 }
                             }
@@ -53,56 +50,41 @@ pipeline {
             }
         }
 
-        // Snyk vulnerability scan
         stage('Snyk Vulnerability Scan') {
             steps {
                 dir('Devsecops_Project/App_code/IncidentManager') {
                     script {
                         try {
-                            // Run Snyk vulnerability test and output the results to JSON
                             sh 'snyk test --all-projects --json > snyk-report.json'
-                            sh 'snyk monitor --json > snyk-monitor-report.json'
+                            sh 'snyk monitor --all-projects --json > snyk-monitor-report.json'
 
-                            // Read the Snyk report to check if vulnerabilities are found
                             def snykTestReport = readFile('snyk-report.json')
                             def snykTestResults = readJSON text: snykTestReport
+                            def vulnerabilities = snykTestResults.vulnerabilities
 
                             def snykMonitorReport = readFile('snyk-monitor-report.json')
                             def snykMonitorResults = readJSON text: snykMonitorReport
 
-                            // Check for vulnerabilities in the test results
-                            def vulnerabilities = snykTestResults.vulnerabilities
+                            def monitoredProjectsSummary = snykMonitorResults.collect { proj ->
+                                "🔍 *${proj.projectName}* → ${proj.uri}"
+                            }.join("\\n")
 
-                            // If vulnerabilities are found, alert via Slack
-                            if (vulnerabilities.size() > 0) {
-                                def message = "❌ Snyk found vulnerabilities in the project! Please review the Snyk report."
-                                withCredentials([string(credentialsId: 'slack_url', variable: 'SLACK_WEBHOOK')])
-                                sh """
-                                    curl -X POST -H 'Content-type: application/json' --data '{
-                                        "channel": "#devsecops",
-                                        "text": "$message"
-                                    }' $SLACK_WEBHOOK
-                                """
-                            } else {
-                                def message = "✅ No vulnerabilities found in the project."
-                                withCredentials([string(credentialsId: 'slack_url', variable: 'SLACK_WEBHOOK')])
-                                sh """
-                                    curl -X POST -H 'Content-type: application/json' --data '{
-                                        "channel": "#devsecops",
-                                        "text": "$message"
-                                    }' $SLACK_WEBHOOK
-                                """
-                            }
+                            def message = vulnerabilities?.size() > 0 ?
+                                "❌ *Snyk found vulnerabilities in the project!*\n\n${monitoredProjectsSummary}" :
+                                "✅ *No vulnerabilities found in the project.*\n\n${monitoredProjectsSummary}"
 
-                            
-
+                            sh """
+                                curl -X POST -H 'Content-type: application/json' --data '{
+                                    "channel": "#devsecops",
+                                    "text": "${message}"
+                                }' ${SLACK_WEBHOOK}
+                            """
                         } catch (err) {
-                            withCredentials([string(credentialsId: 'slack_url', variable: 'SLACK_WEBHOOK')])
                             sh """
                                 curl -X POST -H 'Content-type: application/json' --data '{
                                     "channel": "#devsecops",
                                     "text": "❌ Snyk scan failed: ${err}"
-                                }' $SLACK_WEBHOOK
+                                }' ${SLACK_WEBHOOK}
                             """
                         }
                     }
@@ -110,7 +92,6 @@ pipeline {
             }
         }
 
-        // Build Docker image
         stage('Build Docker Image') {
             steps {
                 dir('Devsecops_Project') {
@@ -119,7 +100,6 @@ pipeline {
             }
         }
 
-        // Push Docker image to DockerHub
         stage('Push to DockerHub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
@@ -131,7 +111,6 @@ pipeline {
             }
         }
 
-        // Deploy to Kubernetes
         stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig-host-to-vm', variable: 'KUBECONFIG_FILE')]) {

@@ -28,7 +28,7 @@ pipeline {
                                             -Dsonar.projectKey=Project \
                                             -Dsonar.sources=. \
                                             -Dsonar.host.url=$SONAR_HOST_URL \
-                                            -Dsonar.login=$SONAR_AUTH_TOKEN \
+                                            -Dsonar.token=$SONAR_AUTH_TOKEN \
                                             -Dsonar.javascript.node.maxspace=1024
                                     '''
                                     sh """
@@ -38,6 +38,7 @@ pipeline {
                                         }' $SLACK_WEBHOOK
                                     """
                                 } catch (err) {
+                                    
                                     sh """
                                         curl -X POST -H 'Content-type: application/json' --data '{
                                             "channel": "#devsecops",
@@ -75,6 +76,7 @@ pipeline {
                             // If vulnerabilities are found, alert via Slack
                             if (vulnerabilities.size() > 0) {
                                 def message = "❌ Snyk found vulnerabilities in the project! Please review the Snyk report."
+                                withCredentials([string(credentialsId: 'slack_url', variable: 'SLACK_WEBHOOK')])
                                 sh """
                                     curl -X POST -H 'Content-type: application/json' --data '{
                                         "channel": "#devsecops",
@@ -83,6 +85,7 @@ pipeline {
                                 """
                             } else {
                                 def message = "✅ No vulnerabilities found in the project."
+                                withCredentials([string(credentialsId: 'slack_url', variable: 'SLACK_WEBHOOK')])
                                 sh """
                                     curl -X POST -H 'Content-type: application/json' --data '{
                                         "channel": "#devsecops",
@@ -91,18 +94,10 @@ pipeline {
                                 """
                             }
 
-                            // Check for vulnerabilities in the monitor results (optional)
-                            if (snykMonitorResults.vulnerabilities.size() > 0) {
-                                def monitorMessage = "❌ Snyk Monitor found vulnerabilities in the project!"
-                                sh """
-                                    curl -X POST -H 'Content-type: application/json' --data '{
-                                        "channel": "#devsecops",
-                                        "text": "$monitorMessage"
-                                    }' $SLACK_WEBHOOK
-                                """
-                            }
+                            
 
                         } catch (err) {
+                            withCredentials([string(credentialsId: 'slack_url', variable: 'SLACK_WEBHOOK')])
                             sh """
                                 curl -X POST -H 'Content-type: application/json' --data '{
                                     "channel": "#devsecops",

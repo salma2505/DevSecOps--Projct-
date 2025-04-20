@@ -106,20 +106,20 @@ pipeline {
                 }
             }
         }
-
         stage('OWASP ZAP Scan') {
-            steps {
-                script {
-                    def zapContainer = docker.image('ghcr.io/zaproxy/zaproxy:stable')
-                    zapContainer.inside("-v /home/jenkins/zap:/zap/wrk") {
-                        sh """
-                            zap-baseline.py -t http://your-app-url-here -r /zap/wrk/zap-report.html
-                        """
-                    }
+            agent {
+                docker {
+                    image 'ghcr.io/zaproxy/zaproxy:stable'
+                    args '-v /home/jenkins/zap:/zap/wrk'
                 }
-            }
+           }
+           steps {
+               sh '''
+                   zap-baseline.py -t http://192.168.67.2:30002 -r /zap/wrk/zap-report.html
+               '''
+           }
         }
-    }
+        
 
     post {
         always {

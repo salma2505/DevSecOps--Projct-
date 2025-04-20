@@ -13,7 +13,7 @@ pipeline {
             }
         }
 
-        /*
+        /* 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
@@ -108,7 +108,7 @@ pipeline {
                 }
             }
         }
-        
+        //owasp stage 
         stage('OWASP ZAP Scan') {
             steps {
                 script {
@@ -121,7 +121,7 @@ pipeline {
             }
         }
     }
-
+    
     post {
         always {
             archiveArtifacts artifacts: 'zap/zap-report.html', fingerprint: true

@@ -12,8 +12,8 @@ pipeline {
                 git branch: 'main', credentialsId: 'github-creds', url: 'https://github.com/salma2505/DevSecOps--Projct-.git'
             }
         }
-
-        /*stage('SonarQube Analysis') {
+       /*
+        stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
                     withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_AUTH_TOKEN')]) {
@@ -94,8 +94,8 @@ pipeline {
                     '''
                 }
             }
-        }
-         */
+        } */
+
         stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig-host-to-vm', variable: 'KUBECONFIG_FILE')]) {
@@ -106,11 +106,25 @@ pipeline {
                 }
             }
         }
+
+        stage('OWASP ZAP Scan') {
+            steps {
+                script {
+                    def zapContainer = docker.image('ghcr.io/zaproxy/zaproxy:stable')
+                    zapContainer.inside("-v /home/jenkins/zap:/zap/wrk") {
+                        sh """
+                            zap-baseline.py -t http://your-app-url-here -r /zap/wrk/zap-report.html
+                        """
+                    }
+                }
+            }
+        }
     }
-    /*
+
     post {
         always {
-            archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/snyk-*.json', fingerprint: true
+            //archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/snyk-*.json', fingerprint: true
+            archiveArtifacts artifacts: 'zap/zap-report.html', fingerprint: true
         }
-    } */
+    }
 }

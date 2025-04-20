@@ -114,7 +114,7 @@ pipeline {
                 script {
                     def zap = docker.image('ghcr.io/zaproxy/zaproxy:stable')
                     zap.pull()
-                    zap.inside('-u root -v /home/jenkins/zap:/zap/wrk') {
+                    zap.inside(' --network=host -u root -v /home/jenkins/zap:/zap/wrk') {
                         sh 'chmod -R 777 /zap/wrk'
                         
 

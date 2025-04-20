@@ -118,7 +118,7 @@ pipeline {
                         sh 'chmod -R 777 /zap/wrk'
                         
 
-                        sh 'zap-baseline.py -t http://192.168.67.2:30002 -r zap-report.html' || true
+                        sh 'zap-baseline.py -t http://192.168.67.2:30002 -r zap-report.html || true'
                     }
                 }
             }

@@ -116,6 +116,8 @@ pipeline {
                     zap.pull()
                     zap.inside('-v /home/jenkins/zap:/zap/wrk') {
                         sh 'chmod -R 777 /zap/wrk'
+                        sh 'chmod -R 777 /home/zap'
+
                         sh 'zap-baseline.py -t http://192.168.67.2:30002 -r /zap/wrk/zap-report.html'
                     }
                 }

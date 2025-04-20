@@ -13,7 +13,7 @@ pipeline {
             }
         }
 
-        /* 
+       
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
@@ -56,13 +56,13 @@ pipeline {
                 dir('Devsecops_Project/App_code/IncidentManager') {
                     script {
                         try {
-                            sh 'snyk test --all-projects --json > snyk-report.json'
-                            sh 'snyk monitor --all-projects --json > snyk-monitor-report.json'
+                            sh 'snyk test --all-projects --json'
+                            sh 'snyk monitor --all-projects --json'
 
                             sh """
                                 curl -X POST -H 'Content-type: application/json' --data '{
                                     "channel": "#devsecops",
-                                    "text": "🔎 Snyk scan completed. Please check snyk Dashboard and the Jenkins artifacts for the vulnerability reports."
+                                    "text": "🔎 Snyk scan completed. Please check snyk Dashboard for the vulnerability results."
                                 }' ${SLACK_WEBHOOK}
                             """
                         } catch (err) {
@@ -128,7 +128,7 @@ pipeline {
     post {
         always {
             archiveArtifacts artifacts: 'zap-report.html', fingerprint: true
-            // archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/snyk-*.json', fingerprint: true
+            
         }
     }
 }

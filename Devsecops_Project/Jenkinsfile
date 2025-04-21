@@ -138,7 +138,7 @@ pipeline {
                     countLow = content.count("Low (Low)")
                 }
 
-                def zapReportUrl = "${env.BUILD_URL}artifact/zap-report.html"
+                def zapReportUrl = "http://192.168.159.128:8080/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/zap-report.html"
                 def slackMessage = """
 🔐 *Rapport OWASP ZAP – ${env.JOB_NAME} #${env.BUILD_NUMBER}*
 <${zapReportUrl}|📄 Voir le rapport complet>

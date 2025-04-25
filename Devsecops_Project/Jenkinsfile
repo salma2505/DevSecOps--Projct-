@@ -12,7 +12,7 @@ pipeline {
                 git branch: 'main', credentialsId: 'github-creds', url: 'https://github.com/salma2505/DevSecOps--Projct-.git'
             }
         }
-      /*
+      
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
@@ -95,7 +95,7 @@ pipeline {
                 }
             }
         }
-     */
+     
         stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig-host-to-vm', variable: 'KUBECONFIG_FILE')]) {
@@ -124,29 +124,13 @@ pipeline {
     post {
         always {
             archiveArtifacts artifacts: 'zap-report.html', fingerprint: true
-
             script {
-                def reportPath = 'zap-report.html'
-                def countHigh = 0
-                def countMedium = 0
-                def countLow = 0
-
-                if (fileExists(reportPath)) {
-                    def content = readFile(reportPath)
-                    countHigh = content.count("High (High)")
-                    countMedium = content.count("Medium (Medium)")
-                    countLow = content.count("Low (Low)")
-                }
 
                 def zapReportUrl = "http://192.168.159.128:8080/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/zap-report.html"
                 def slackMessage = """
 🔐 *Rapport OWASP ZAP – ${env.JOB_NAME} #${env.BUILD_NUMBER}*
 <${zapReportUrl}|📄 Voir le rapport complet>
 
-*Résumé des vulnérabilités détectées :*
-- 🔴 High : ${countHigh}
-- 🟠 Medium : ${countMedium}
-- 🟡 Low : ${countLow}
                 """.stripIndent()
 
                 sh """

@@ -106,7 +106,7 @@ pipeline {
                 }
             }
         }
-
+        //owasp stage 
         stage('OWASP ZAP Scan') {
             steps {
                 script {

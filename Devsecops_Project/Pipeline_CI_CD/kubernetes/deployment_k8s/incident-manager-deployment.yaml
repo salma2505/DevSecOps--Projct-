@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: incident-manager
+  namespace: incident
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: incident-manager
+  template:
+    metadata:
+      labels:
+        app: incident-manager
+    spec:
+      serviceAccountName: my-secure-app-sa
+      initContainers:
+        - name: run-migrations
+          image: salma2505/incidentshield:latest
+          command: ["npx", "drizzle-kit", "migrate"]
+          env:
+            - name: DATABASE_URL
+              value: postgresql://postgres:chimchim95@incident-db:5432/incidentDB
+          securityContext:        # <--- ADDED SECURITY CONTEXT HERE
+            allowPrivilegeEscalation: false
+            
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+
+      containers:
+        - name: incident-manager
+          image: salma2505/incidentshield:latest
+          ports:
+            - containerPort: 5000
+          env:
+            - name: DATABASE_URL
+              value: postgresql://postgres:chimchim95@incident-db:5432/incidentDB
+          securityContext:        # <--- ADDED SECURITY CONTEXT HERE
+            allowPrivilegeEscalation: false
+            
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: incident-manager-service
+  namespace: incident
+spec:
+  type: NodePort
+  selector:
+    app: incident-manager
+  ports:
+    - port: 5000
+      targetPort: 5000
+      nodePort: 30003
+

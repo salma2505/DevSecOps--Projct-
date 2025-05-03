@@ -132,7 +132,7 @@ pipeline {
             }
         }
     }
-
+//post
     post {
         always {
             archiveArtifacts artifacts: 'zap-report.html,logs.txt',fingerprint: true

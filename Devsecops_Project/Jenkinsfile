@@ -12,7 +12,7 @@ pipeline {
                 git branch: 'main', credentialsId: 'github-creds', url: 'https://github.com/salma2505/DevSecOps--Projct-.git'
             }
         }
-      
+      /*
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
@@ -95,7 +95,7 @@ pipeline {
                 }
             }
         }
-     
+     */
         stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig-host-to-vm', variable: 'KUBECONFIG_FILE')]) {
@@ -119,11 +119,23 @@ pipeline {
                 }
             }
         }
+         stage('Analyse des Logs de l’application') {
+            steps {
+                sh 'kubectl logs -l app=mon-app > logs.txt'
+                archiveArtifacts artifacts: 'logs.txt'
+            }
+        }
+        stage('Vérification de l’état des Pods') {
+            steps {
+                sh 'kubectl get pods -o wide'
+                sh 'kubectl describe pods'
+            }
+        }
     }
 
     post {
         always {
-            archiveArtifacts artifacts: 'zap-report.html', fingerprint: true
+            archiveArtifacts artifacts: 'zap-report.html', 'logs.txt',fingerprint: true
             script {
 
                 def zapReportUrl = "http://192.168.159.128:8080/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/zap-report.html"

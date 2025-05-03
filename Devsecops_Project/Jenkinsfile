@@ -124,7 +124,7 @@ pipeline {
                 sh 'kubectl logs -l app=incident-manager > logs.txt'
                 archiveArtifacts artifacts: 'logs.txt'
             }
-        } //verification 
+        } 
         stage('Vérification de l’état des Pods') {
             steps {
                 sh 'kubectl get pods -o wide'

@@ -135,7 +135,7 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: 'zap-report.html', 'logs.txt',fingerprint: true
+            archiveArtifacts artifacts: 'zap-report.html,logs.txt',fingerprint: true
             script {
 
                 def zapReportUrl = "http://192.168.159.128:8080/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/zap-report.html"

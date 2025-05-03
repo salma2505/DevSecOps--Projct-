@@ -121,7 +121,7 @@ pipeline {
         }
          stage('Analyse des Logs de l’application') {
             steps {
-                sh 'kubectl logs -l app=mon-app > logs.txt'
+                sh 'kubectl logs -l app=incident-manager > logs.txt'
                 archiveArtifacts artifacts: 'logs.txt'
             }
         }

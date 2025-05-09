@@ -49,7 +49,7 @@ pipeline {
                 }
             }
         }
-     /* 
+     /* test
         stage('Snyk Vulnerability Scan') {
             steps {
                 dir('Devsecops_Project/App_code/IncidentManager') {

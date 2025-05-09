@@ -49,7 +49,7 @@ pipeline {
                 }
             }
         }
-
+     /*
         stage('Snyk Vulnerability Scan') {
             steps {
                 dir('Devsecops_Project/App_code/IncidentManager') {
@@ -118,10 +118,10 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
     }  
         
-
+   /*
     post {
         always {
             archiveArtifacts artifacts: 'zap-report.html',fingerprint: true
@@ -142,5 +142,5 @@ pipeline {
                 """
             }
         }
-    }
+    }*/
 }

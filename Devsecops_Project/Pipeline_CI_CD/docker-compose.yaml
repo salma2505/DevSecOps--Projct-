@@ -1,0 +1,101 @@
+
+
+services:
+  jenkins:
+    build: 
+    
+      context: ./jenkins
+      dockerfile: Dockerfile
+    image: custom-jenkins:dev
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - JENKINS_OPTS=--prefix=/jenkins
+    networks:
+      - devsecops-net
+
+  sonarqube:
+    image: sonarqube:lts
+    container_name: sonarqube
+    ports:
+      - "9000:9000"
+    environment:
+      - SONARQUBE_JDBC_URL=jdbc:postgresql://db:5432/sonar
+    depends_on:
+      - postgres
+    networks:
+      - devsecops-net
+
+  postgres:
+    image: postgres:latest
+    container_name: sonarqube_db
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonar
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - devsecops-net
+
+  zap:
+    image: zaproxy/zap-stable
+    container_name: zap
+    ports:
+      - "8081:8080"
+    volumes:
+      - zap_data:/zap
+    networks:
+      - devsecops-net
+
+  snyk:
+    image: snyk/snyk-cli:python-3.6
+    container_name: snyk
+    working_dir: /project
+    volumes:
+      - ../App_code:/project/App_code
+    entrypoint: ""
+    networks:
+      - devsecops-net
+
+  vault:
+    image: hashicorp/vault:latest
+    container_name: vault
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=root
+      - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+      - VAULT_DEV_SERVER_MODE=true
+    ports:
+      - "8200:8200"
+    volumes:
+      - vault_data:/vault/data
+    networks:
+      - devsecops-net
+    cap_add:
+      - IPC_LOCK
+
+  ansible:
+    image: williamyeh/ansible:alpine3
+    container_name: ansible
+    volumes:
+      - ./ansible:/ansible
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /ansible
+    command: tail -f /dev/null
+    networks:
+      - devsecops-net
+
+networks:
+  devsecops-net:
+    driver: bridge
+
+volumes:
+  jenkins_home:
+  postgres_data:
+  zap_data:
+  vault_data:

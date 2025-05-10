@@ -13,7 +13,7 @@ RUN npm install
 # Copy .env file into the container
 COPY App_code/IncidentManager/.env ./
 
-# Install drizzle-kit locally (make sure it's available for migration)
+# Install drizzle-kit locally 
 RUN npm install drizzle-kit
 
 # Copy drizzle config ,schema and meta  files

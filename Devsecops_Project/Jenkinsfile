@@ -55,21 +55,21 @@ pipeline {
                 dir('Devsecops_Project/App_code/IncidentManager') {
                     script {
                         try {
-                            sh 'snyk test --all-projects --json'
-                            sh 'snyk monitor --all-projects --json'
+                            sh 'docker-compose run --rm snyk test --all-projects --json'
+                            sh 'docker-compose run --rm snyk monitor --all-projects --json'
 
                             sh """
                                 curl -X POST -H 'Content-type: application/json' --data '{
                                     "channel": "#devsecops",
                                     "text": "🔎 Snyk scan completed. Please check snyk Dashboard for the vulnerability results."
-                                }' ${SLACK_WEBHOOK}
+                                }' '${SLACK_WEBHOOK}'
                             """
                         } catch (err) {
                             sh """
                                 curl -X POST -H 'Content-type: application/json' --data '{
                                     "channel": "#devsecops",
                                     "text": "❌ Snyk scan failed. Check Jenkins logs for more info."
-                                }' ${SLACK_WEBHOOK}
+                                }' '${SLACK_WEBHOOK}'
                             """
                         }
                     }

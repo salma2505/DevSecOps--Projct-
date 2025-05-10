@@ -55,8 +55,8 @@ pipeline {
                 dir('Devsecops_Project/Pipeline_CI_CD') {
                     script {
                         try {
-                            sh 'sudo docker compose run --rm snyk snyk test /project/App_code/IncidentManager --json'
-                            sh 'sudo docker compose run --rm snyk snyk monitor /project/App_code/IncidentManager --json'
+                            sh ' docker compose run --rm snyk snyk test /project/App_code/IncidentManager --json'
+                            sh ' docker compose run --rm snyk snyk monitor /project/App_code/IncidentManager --json'
 
                             sh """
                                 curl -X POST -H 'Content-type: application/json' --data '{

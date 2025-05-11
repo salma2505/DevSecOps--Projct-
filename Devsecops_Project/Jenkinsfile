@@ -4,6 +4,7 @@ pipeline {
     environment {
         SONARQUBE = 'sonarqube'
         SLACK_WEBHOOK = credentials('slack_url')
+        SNYK_TOKEN = credentials('snyk-token')
     }
 
     stages {
@@ -56,8 +57,8 @@ pipeline {
                     script {
                         withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) {
                             try {
-                                sh ' docker compose run --rm snyk snyk test /project/App_code/IncidentManager --json'
-                                sh ' docker compose run --rm snyk snyk monitor /project/App_code/IncidentManager --json'
+                                sh ' docker compose run --rm -e SNYK_TOKEN=$SNYK_TOKEN snyk snyk test /project/App_code/IncidentManager --json'
+                                sh ' docker compose run --rm -e SNYK_TOKEN=$SNYK_TOKEN  snyk snyk monitor /project/App_code/IncidentManager --json'
 
                                 sh """
                                     curl -X POST -H 'Content-type: application/json' --data '{

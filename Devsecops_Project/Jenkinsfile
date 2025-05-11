@@ -54,16 +54,17 @@ pipeline {
             steps {
                 dir('Devsecops_Project/Pipeline_CI_CD') {
                     script {
-                        try {
-                            sh ' docker compose run --rm snyk snyk test /project/App_code/IncidentManager --json'
-                            sh ' docker compose run --rm snyk snyk monitor /project/App_code/IncidentManager --json'
+                        withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) {
+                            try {
+                                sh ' docker compose run --rm snyk snyk test /project/App_code/IncidentManager --json'
+                                sh ' docker compose run --rm snyk snyk monitor /project/App_code/IncidentManager --json'
 
-                            sh """
-                                curl -X POST -H 'Content-type: application/json' --data '{
-                                    "channel": "#devsecops",
-                                    "text": "🔎 Snyk scan completed. Please check snyk Dashboard for the vulnerability results."
-                                }' '${SLACK_WEBHOOK}'
-                            """
+                                sh """
+                                    curl -X POST -H 'Content-type: application/json' --data '{
+                                        "channel": "#devsecops",
+                                        "text": "🔎 Snyk scan completed. Please check snyk Dashboard for the vulnerability results."
+                                    }' '${SLACK_WEBHOOK}'
+                                """
                         } catch (err) {
                             sh """
                                 curl -X POST -H 'Content-type: application/json' --data '{
@@ -76,6 +77,7 @@ pipeline {
                 }
             }
         }
+      }      
         /*
         stage('Build Docker Image') {
             steps {

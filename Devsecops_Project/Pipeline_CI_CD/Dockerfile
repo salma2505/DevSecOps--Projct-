@@ -8,7 +8,7 @@ RUN npm install -g typescript ts-node tsx
 
 # Copy package files and install dependencies
 COPY ../App_code/IncidentManager/package*.json ./
-RUN npm install
+
 
 # Copy .env file into the container
 COPY App_code/IncidentManager/.env ./

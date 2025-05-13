@@ -57,7 +57,7 @@ pipeline {
                       withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) {
                           script {
                               try {
-                                  sh 'npm install -g snyk'
+                                  sh 'npm install snyk'
                                   sh """
                                      export SNYK_TOKEN=${SNYK_TOKEN}
                                      snyk test --json > snyk-results.json

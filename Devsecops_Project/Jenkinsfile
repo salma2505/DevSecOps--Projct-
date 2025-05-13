@@ -57,7 +57,7 @@ pipeline {
                     script {
                         withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) {
                             try {
-                                sh ' docker compose run --rm -e SNYK_TOKEN=$SNYK_TOKEN  snyk ls /project/Ap_code/IncidentManager '
+                                sh ' docker compose run --rm -e SNYK_TOKEN=$SNYK_TOKEN  snyk ls /project/App_code/IncidentManager '
                                 //sh ' docker compose run --rm -e SNYK_TOKEN=$SNYK_TOKEN  snyk snyk monitor /project/App_code/IncidentManager --json'
 
                                 sh """

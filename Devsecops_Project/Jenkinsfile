@@ -129,6 +129,7 @@ pipeline {
         always{
             archiveArtifacts artifacts: 'snyk-results.json', allowEmptyArchive: true
         }
+    }
    /*
     post {
         always {

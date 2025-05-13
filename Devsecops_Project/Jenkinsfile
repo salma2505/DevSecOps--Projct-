@@ -60,7 +60,7 @@ pipeline {
                                   sh 'npm install snyk'
                                   sh """
                                      export SNYK_TOKEN=${SNYK_TOKEN}
-                                     snyk test --json > snyk-results.json
+                                     npx snyk test --json > snyk-results.json
                                   """
                                   sh """
                                       curl -X POST -H 'Content-type: application/json' --data '{

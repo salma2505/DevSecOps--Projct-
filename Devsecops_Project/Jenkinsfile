@@ -128,7 +128,7 @@ pipeline {
     post{
         always{
           
-            archiveArtifacts artifacts: 'Devsecops_Project/App_code/snyk-results.json', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/snyk-results.json', allowEmptyArchive: true
         }
     }
     

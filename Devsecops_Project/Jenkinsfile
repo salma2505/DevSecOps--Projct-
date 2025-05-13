@@ -57,7 +57,7 @@ pipeline {
                     script {
                         //withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) 
                             try {
-                                snykSecurityScan(
+                                snykSecurity(
                                     failOnIssues: true,
                                     projectName: 'IncidentManager',
                                     additionalArguments: '--json'

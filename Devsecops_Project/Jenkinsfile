@@ -53,11 +53,12 @@ pipeline {
      
         stage('Snyk Vulnerability Scan') {
             steps {
-                dir('Devsecops_Project/Pipeline_CI_CD') {
+                dir('Devsecops_Project/App_code') {
                     script {
                         //withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) 
                             try {
                                 snykSecurity(
+                                    snykInstallation: 'snyk-cli',
                                     failOnIssues: true,
                                     projectName: 'IncidentManager',
                                     additionalArguments: '--json'

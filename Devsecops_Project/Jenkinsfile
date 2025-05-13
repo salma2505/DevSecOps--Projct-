@@ -53,20 +53,20 @@ pipeline {
      
         stage('Snyk Vulnerability Scan') {
             steps {
-                dir('Devsecops_Project/App_code/IncidentManager') {
-                    script {
-                        withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) 
-                            try {
-                                sh """
-                                    export SNYK_TOKEN=${SNYK_TOKEN}
-                                    snyk test --json > snyk-results.json
-                                """
-                                sh """
-                                    curl -X POST -H 'Content-type: application/json' --data '{
+                 dir('Devsecops_Project/Pipeline_CI_CD') {
+                      withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) {
+                          script {
+                              try {
+                                  sh """
+                                     export SNYK_TOKEN=${SNYK_TOKEN}
+                                     snyk test --json > snyk-results.json
+                                  """
+                                  sh """
+                                      curl -X POST -H 'Content-type: application/json' --data '{
                                         "channel": "#devsecops",
                                         "text": "🔎 Snyk scan completed. Please check snyk Dashboard for the vulnerability results."
                                     }' '${SLACK_WEBHOOK}'
-                                """
+                                  """
                         } catch (err) {
                             sh """
                                 curl -X POST -H 'Content-type: application/json' --data '{

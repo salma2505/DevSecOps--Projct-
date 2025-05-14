@@ -82,12 +82,12 @@ stage('Snyk Vulnerability Scan') {
 
                         // Envoyer le rapport JSON dans Slack
                         sh """
-                            curl -F file=@snyk-scan-results.json \
-                                 -F "initial_comment=🧾 Rapport Snyk JSON" \
-                                 -F channels=#devsecops \
-                                 -H "Authorization: Bearer ${SLACK_TOKEN}" \
-                                 https://slack.com/api/files.upload
-                        """
+                             curl -X POST https://slack.com/api/files.upload \
+                                  -H "Authorization: Bearer ${SLACK_TOKEN}" \
+                                  -F channels=#devsecops \
+                                  -F initial_comment="🧾 Rapport Snyk JSON" \
+                                  -F file=@snyk-scan-results.json
+                              """
 
                         // Message Slack de succès
                         sh """

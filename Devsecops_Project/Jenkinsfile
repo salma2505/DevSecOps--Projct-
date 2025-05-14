@@ -76,38 +76,11 @@ stage('Snyk Vulnerability Scan') {
                             echo "⚠️ Snyk a détecté des vulnérabilités (status code ${snykStatus})"
                         }
 
-                        // Vérification que le fichier a été généré
-                        sh "ls -lh snyk-scan-results.json"
-                        sh "head -n 20 snyk-scan-results.json"
-
-                        // Envoyer le rapport JSON dans Slack
-                        sh """
-                             curl -X POST https://slack.com/api/files.upload \
-                                  -H "Authorization: Bearer ${SLACK_TOKEN}" \
-                                  -F channels=#devsecops \
-                                  -F initial_comment="🧾 Rapport Snyk JSON" \
-                                  -F file=@snyk-scan-results.json
-                              """
-
-                        // Message Slack de succès
-                        sh """
-                            curl -X POST -H 'Content-type: application/json' --data '{
-                                "channel": "#devsecops",
-                                "text": "✅ Snyk scan terminé. Rapport attaché au message."
-                            }' '${SLACK_WEBHOOK}'
-                        """
 
                     } catch (err) {
                         echo "Erreur pendant le scan Snyk : ${err}"
-
-                        // Message Slack d'échec
-                        sh """
-                            curl -X POST -H 'Content-type: application/json' --data '{
-                                "channel": "#devsecops",
-                                "text": "❌ Snyk scan failed. Vérifiez les logs Jenkins pour plus de détails."
-                            }' '${SLACK_WEBHOOK}'
-                        """
                         error("Snyk scan failed")
+
                     }
                 }
             }
@@ -162,8 +135,27 @@ stage('Snyk Vulnerability Scan') {
     }  
     post{
         always{
-          
-            archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/snyk-scan-results.json', allowEmptyArchive: true
+
+            archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/snyk-scan-results.json', fingerprint: true
+            script {
+                // Construire l’URL du rapport depuis Jenkins
+                def snykReportUrl = "http://localhost:8080/jenkins/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/snyk-scan-results.json"
+
+                // Message Slack avec lien vers le rapport Snyk
+                def slackMessage = """
+🔐 *Rapport Snyk – ${env.JOB_NAME} #${env.BUILD_NUMBER}*
+<${snykReportUrl}|📄 Voir le rapport JSON>
+                """.stripIndent()
+
+                // Envoi du message Slack
+                sh """
+                    curl -X POST -H 'Content-type: application/json' --data '{
+                        "channel": "#devsecops",
+                        "text": "${slackMessage}"
+                    }' ${SLACK_WEBHOOK}
+                """
+            }
+       
         }
     }
     

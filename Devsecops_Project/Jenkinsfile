@@ -51,36 +51,57 @@ pipeline {
             }
         }*/
      
-        stage('Snyk Vulnerability Scan') {
-            steps {
-                 dir('Devsecops_Project/App_code/IncidentManager') {
-                      withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) {
-                          script {
-                              try {
-                                  sh 'npm install snyk'
-                                  sh """
-                                     export SNYK_TOKEN=${SNYK_TOKEN}
-                                     npx snyk test --json > snyk-results.json
-                                  """
-                                  sh """
-                                      curl -X POST -H 'Content-type: application/json' --data '{
-                                        "channel": "#devsecops",
-                                        "text": "🔎 Snyk scan completed. Please check snyk Dashboard for the vulnerability results."
-                                    }' '${SLACK_WEBHOOK}'
-                                  """
-                        } catch (err) {
-                            sh """
-                                curl -X POST -H 'Content-type: application/json' --data '{
-                                    "channel": "#devsecops",
-                                    "text": "❌ Snyk scan failed. Check Jenkins logs for more info."
-                                }' '${SLACK_WEBHOOK}'
-                            """
-                        }
+stage('Snyk Vulnerability Scan') {
+    steps {
+        dir('Devsecops_Project/App_code/IncidentManager') {
+            withCredentials([
+                string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN'),
+                string(credentialsId: 'slack-bot-token', variable: 'SLACK_TOKEN')
+            ]) {
+                script {
+                    try {
+                        // Installer Snyk localement
+                        sh 'npm install snyk'
+
+                        // Exécuter le scan Snyk et sauvegarder le résultat
+                        sh """
+                            export SNYK_TOKEN=${SNYK_TOKEN}
+                            npx snyk test --json > snyk-scan-results.json
+                        """
+
+                        // Envoyer le fichier de rapport JSON dans Slack
+                        sh """
+                            curl -F file=@snyk-scan-results.json \
+                                 -F "initial_comment=🧾 Rapport Snyk JSON" \
+                                 -F channels=#devsecops \
+                                 -H "Authorization: Bearer ${SLACK_TOKEN}" \
+                                 https://slack.com/api/files.upload
+                        """
+
+                        // Message de succès (optionnel)
+                        sh """
+                            curl -X POST -H 'Content-type: application/json' --data '{
+                                "channel": "#devsecops",
+                                "text": "✅ Snyk scan completed successfully. See the attached report."
+                            }' '${SLACK_WEBHOOK}'
+                        """
+
+                    } catch (err) {
+                        // En cas d'erreur, envoyer un message d'échec
+                        sh """
+                            curl -X POST -H 'Content-type: application/json' --data '{
+                                "channel": "#devsecops",
+                                "text": "❌ Snyk scan failed. Check Jenkins logs for more info."
+                            }' '${SLACK_WEBHOOK}'
+                        """
+                        error("Snyk scan failed")
                     }
                 }
             }
         }
-      }      
+    }
+}
+
         /*
         stage('Build Docker Image') {
             steps {
@@ -128,7 +149,7 @@ pipeline {
     post{
         always{
           
-            archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/snyk-results.json', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/snyk-scan-results.json', allowEmptyArchive: true
         }
     }
     

@@ -139,8 +139,7 @@ stage('Snyk Vulnerability Scan') {
             archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/snyk-scan-results.json', fingerprint: true
             script {
                 // Construire l’URL du rapport depuis Jenkins
-                def snykReportUrl = "http://localhost:8080/jenkins/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/snyk-scan-results.json"
-
+                def snykReportUrl = "http://localhost:8080/jenkins/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/lastSuccessfulBuild/artifact/Devsecops_Project/App_code/IncidentManager/snyk-scan-results.json"
                 // Message Slack avec lien vers le rapport Snyk
                 def slackMessage = """
 🔐 *Rapport Snyk – ${env.JOB_NAME} #${env.BUILD_NUMBER}*

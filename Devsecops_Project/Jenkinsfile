@@ -64,12 +64,23 @@ stage('Snyk Vulnerability Scan') {
                         sh 'npm install snyk'
 
                         // Exécuter le scan Snyk et sauvegarder le résultat
-                        sh """
-                            export SNYK_TOKEN=${SNYK_TOKEN}
-                            npx snyk test --json > snyk-scan-results.json
-                        """
+                        def snykStatus = sh(
+                            script: """
+                                export SNYK_TOKEN=${SNYK_TOKEN}
+                                npx snyk test --json > snyk-scan-results.json
+                            """,
+                            returnStatus: true
+                        )
 
-                        // Envoyer le fichier de rapport JSON dans Slack
+                        if (snykStatus != 0) {
+                            echo "⚠️ Snyk a détecté des vulnérabilités (status code ${snykStatus})"
+                        }
+
+                        // Vérification que le fichier a été généré
+                        sh "ls -lh snyk-scan-results.json"
+                        sh "head -n 20 snyk-scan-results.json"
+
+                        // Envoyer le rapport JSON dans Slack
                         sh """
                             curl -F file=@snyk-scan-results.json \
                                  -F "initial_comment=🧾 Rapport Snyk JSON" \
@@ -78,20 +89,22 @@ stage('Snyk Vulnerability Scan') {
                                  https://slack.com/api/files.upload
                         """
 
-                        // Message de succès (optionnel)
+                        // Message Slack de succès
                         sh """
                             curl -X POST -H 'Content-type: application/json' --data '{
                                 "channel": "#devsecops",
-                                "text": "✅ Snyk scan completed successfully. See the attached report."
+                                "text": "✅ Snyk scan terminé. Rapport attaché au message."
                             }' '${SLACK_WEBHOOK}'
                         """
 
                     } catch (err) {
-                        // En cas d'erreur, envoyer un message d'échec
+                        echo "Erreur pendant le scan Snyk : ${err}"
+
+                        // Message Slack d'échec
                         sh """
                             curl -X POST -H 'Content-type: application/json' --data '{
                                 "channel": "#devsecops",
-                                "text": "❌ Snyk scan failed. Check Jenkins logs for more info."
+                                "text": "❌ Snyk scan failed. Vérifiez les logs Jenkins pour plus de détails."
                             }' '${SLACK_WEBHOOK}'
                         """
                         error("Snyk scan failed")
@@ -101,6 +114,7 @@ stage('Snyk Vulnerability Scan') {
         }
     }
 }
+
 
         /*
         stage('Build Docker Image') {

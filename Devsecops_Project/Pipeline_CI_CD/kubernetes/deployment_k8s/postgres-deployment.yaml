@@ -25,10 +25,15 @@ spec:
       labels:
         app: incident-db
     spec:
-      
+      serviceAccountName: incident-manager-sa
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+
       containers:
       - name: postgres
-        image: postgres:latest
+        image: bitnami/postgresql:16
         ports:
         - containerPort: 5432
         env:
@@ -39,8 +44,16 @@ spec:
         - name: POSTGRES_DB
           value: incidentDB
         volumeMounts:
-        - mountPath: /var/lib/postgresql/data
+        - mountPath: /bitnami/postgresql
           name: postgres-storage
+        securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+            runAsNonRoot: true
       volumes:
       - name: postgres-storage
         persistentVolumeClaim:

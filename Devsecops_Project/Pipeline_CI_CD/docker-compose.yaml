@@ -1,4 +1,5 @@
 
+
 services:
   jenkins:
     build: 
@@ -13,11 +14,34 @@ services:
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
-    user: root
+    
     environment:
       - JENKINS_OPTS=--prefix=/jenkins
     networks:
       - devsecops-net
+  k3s:
+    image: rancher/k3s:latest
+    container_name: k3s
+    privileged: true
+    ports:
+      - "32457:32457"
+      - "32456:32456"
+      - "6443:6443"
+      - "30003:30003"
+      - "30002:30002"
+      - "30001:30001"
+      - "31240:31240"
+      - "31234:31234"
+      - "31235:31235"
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - k3s_data:/var/lib/rancher/k3s
+      - ./k3s-config:/etc/rancher/k3s
+    environment:
+      - K3S_KUBEVIRT_CONTAINER=1
+    command: server --disable traefik --disable servicelb
+
 
   sonarqube:
     image: sonarqube:lts
@@ -53,15 +77,6 @@ services:
     networks:
       - devsecops-net
 
-  snyk:
-    image: snyk/snyk-cli:python-3.6
-    container_name: snyk
-    working_dir: /project
-    volumes:
-      - ../App_code:/project/App_code
-    entrypoint: ""
-    networks:
-      - devsecops-net
 
   vault:
     image: hashicorp/vault:latest
@@ -96,6 +111,7 @@ networks:
 
 volumes:
   jenkins_home:
+  k3s_data:
   postgres_data:
   zap_data:
   vault_data:

@@ -5,9 +5,23 @@ metadata:
 data:
   filebeat.yml: |
     filebeat.inputs:
-    - type: container
-      paths:
-        - /var/lib/docker/containers/*/*.log
+      - type: container
+        enabled: true
+        paths:
+          - /var/lib/docker/containers/*/*.log
+
+      - type: log
+        enabled: true
+        paths:
+          - /var/log/suricata/eve.json
+          - /var/log/suricata/fast.log
+        json.keys_under_root: true
+        json.add_error_key: true
+        tags: ["suricata"]
+
+    processors:
+      - add_host_metadata: ~
+      - add_cloud_metadata: ~
 
     output.elasticsearch:
       hosts: ["http://elasticsearch:9200"]

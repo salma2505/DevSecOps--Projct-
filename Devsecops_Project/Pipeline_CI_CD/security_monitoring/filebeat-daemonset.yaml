@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: filebeat
+  
   labels:
     app: filebeat
 spec:
@@ -12,11 +13,21 @@ spec:
     metadata:
       labels:
         app: filebeat
-      annotations:
-        pod-security.kubernetes.io/enforce: privileged
-        pod-security.kubernetes.io/audit: privileged
-        pod-security.kubernetes.io/warn: privileged
+      
     spec:
+      serviceAccountName: incident-manager-sa  
+      securityContext:
+        
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
       containers:
       - name: filebeat
         image: docker.elastic.co/beats/filebeat:8.13.4
@@ -24,14 +35,11 @@ spec:
           "-c", "/etc/filebeat.yml",
           "-e",
         ]
+        
         securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - ALL
-          runAsNonRoot: true
-          seccompProfile:
-            type: RuntimeDefault
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
         volumeMounts:
         - name: config
           mountPath: /etc/filebeat.yml
@@ -41,6 +49,9 @@ spec:
         - name: containers
           mountPath: /var/lib/docker/containers
           readOnly: true
+        - name: suricata-logs              
+          mountPath: /var/log/suricata       
+          readOnly: true   
       volumes:
       - name: config
         configMap:
@@ -51,4 +62,7 @@ spec:
       - name: containers
         hostPath:
           path: /var/lib/docker/containers
+      - name: suricata-logs               
+        hostPath:
+            path: /var/log/suricata        
 

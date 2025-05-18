@@ -1,3 +1,4 @@
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,6 +13,11 @@ spec:
       labels:
         app: elasticsearch
     spec:
+      serviceAccountName: incident-manager-sa  
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: elasticsearch
         image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
@@ -20,6 +26,17 @@ spec:
         env:
         - name: discovery.type
           value: single-node
+        - name: xpack.security.enabled
+          value: "false"
+        #- name: ELASTICSEARCH_USERNAME
+        #  value: "elastic"  
+      #  - name: "ELASTIC_PASSWORD"
+         # valueFrom:
+           # secretKeyRef:
+             # name: elasticsearch-password
+           #   key: elastic_password  
+        - name: xpack.security.transport.ssl.enabled
+          value: "false"
         resources:
           limits:
             memory: "2Gi"
@@ -27,19 +44,37 @@ spec:
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
-            drop:
-            - ALL
-          runAsNonRoot: true
-          seccompProfile:
-            type: RuntimeDefault
+            drop: ["ALL"]
+        volumeMounts:
+        - name: elasticsearch-storage
+          mountPath: /usr/share/elasticsearch/data
+      volumes:
+        - name: elasticsearch-storage
+          persistentVolumeClaim:
+            claimName: elasticsearch-pvc
+  
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: elasticsearch-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: elasticsearch
+  name: elasticsearch         
 spec:
+  type: NodePort
   ports:
   - port: 9200
     targetPort: 9200
+    nodePort: 30001
   selector:
     app: elasticsearch

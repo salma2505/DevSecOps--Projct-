@@ -161,10 +161,10 @@ stage('Snyk Vulnerability Scan') {
    
     post {
         always {
-            archiveArtifacts artifacts: 'zap-report.html',fingerprint: true
+            archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/zap-report.html',fingerprint: true
             script {
 
-                def zapReportUrl = "http://localhost:8080/jenkins/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/zap-report.html"
+                def zapReportUrl = "http://localhost:8080/jenkins/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/Devsecops_Project/App_code/IncidentManager/zap-report.html"
                 def slackMessage = """
 🔐 *Rapport OWASP ZAP – ${env.JOB_NAME} #${env.BUILD_NUMBER}*
 <${zapReportUrl}|📄 Voir le rapport complet>

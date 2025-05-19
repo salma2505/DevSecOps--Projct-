@@ -50,7 +50,7 @@ pipeline {
                 }
             }
         }*/
-     
+     /*
 stage('Snyk Vulnerability Scan') {
     steps {
         dir('Devsecops_Project/App_code/IncidentManager') {
@@ -86,7 +86,7 @@ stage('Snyk Vulnerability Scan') {
             }
         }
     }
-}
+}*/
 
 
         /*
@@ -119,7 +119,7 @@ stage('Snyk Vulnerability Scan') {
                 }
             }
         }*/
-        /*
+        
         stage('OWASP ZAP Scan') {
             steps {
                 script {
@@ -127,12 +127,12 @@ stage('Snyk Vulnerability Scan') {
                     zap.pull()
                     zap.inside("-v ${pwd()}:/zap/wrk --network=host -u root") {
                         sh 'chmod -R 777 /zap/wrk'
-                        sh 'zap-baseline.py -t http://192.168.159.128:30003 -r zap-report.html || true'
+                        sh 'zap-baseline.py -t http://localhost:30003 -r zap-report.html || true'
                     }
                 }
             }
-        }*/
-    }  
+        }
+    }  /*
     post{
         always{
 
@@ -157,14 +157,14 @@ stage('Snyk Vulnerability Scan') {
        
         }
     }
-    
-   /*
+    */
+   
     post {
         always {
             archiveArtifacts artifacts: 'zap-report.html',fingerprint: true
             script {
 
-                def zapReportUrl = "http://192.168.159.128:8080/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/zap-report.html"
+                def zapReportUrl = "http://localhost:8080/jenkins/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/zap-report.html"
                 def slackMessage = """
 🔐 *Rapport OWASP ZAP – ${env.JOB_NAME} #${env.BUILD_NUMBER}*
 <${zapReportUrl}|📄 Voir le rapport complet>
@@ -179,5 +179,5 @@ stage('Snyk Vulnerability Scan') {
                 """
             }
         }
-    }*/
+    }
 }

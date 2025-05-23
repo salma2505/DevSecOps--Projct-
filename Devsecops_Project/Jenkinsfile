@@ -127,7 +127,7 @@ stage('Snyk Vulnerability Scan') {
                     zap.pull()
                     zap.inside("-v ${pwd()}:/zap/wrk --network=host -u root") {
                         sh 'chmod -R 777 /zap/wrk'
-                        sh 'zap-baseline.py -t http://localhost:30003 -r zap-report.html || true'
+                        sh 'zap-baseline.py -t http://localhost:30006 -r zap-report.html || true'
                     }
                 }
             }

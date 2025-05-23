@@ -135,7 +135,7 @@ stage('Snyk Vulnerability Scan') {
     }  /*
     post{
         always{
-
+            
             archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/snyk-scan-results.json', fingerprint: true
             script {
                 // Construire l’URL du rapport depuis Jenkins
@@ -161,6 +161,14 @@ stage('Snyk Vulnerability Scan') {
    
     post {
         always {
+            script {
+            // Crée le dossier si besoin
+            sh 'mkdir -p Devsecops_Project/App_code/IncidentManager'
+            
+            // Déplace le rapport s'il est à la racine du workspace
+            sh 'if [ -f zap-report.html ]; then mv zap-report.html Devsecops_Project/App_code/IncidentManager/; fi'
+            }
+        
             archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/zap-report.html',fingerprint: true
             script {
 

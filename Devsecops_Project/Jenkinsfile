@@ -128,6 +128,7 @@ stage('Snyk Vulnerability Scan') {
                     zap.inside("-v ${pwd()}:/zap/wrk --network=host -u root") {
                         sh 'chmod -R 777 /zap/wrk'
                         sh 'zap-baseline.py -t http://localhost:30006 -r zap-report.html || true'
+                        sh 'ls -al /zap/wrk'
                     }
                 }
             }
@@ -163,10 +164,18 @@ stage('Snyk Vulnerability Scan') {
         always {
             script {
             // Crée le dossier si besoin
-            sh 'mkdir -p Devsecops_Project/App_code/IncidentManager'
+            sh '''
+                mkdir -p Devsecops_Project/App_code/IncidentManager'
             
             // Déplace le rapport s'il est à la racine du workspace
-            sh 'if [ -f zap-report.html ]; then mv zap-report.html Devsecops_Project/App_code/IncidentManager/; fi'
+                if [ -f zap-report.html ]; then
+                    mv zap-report.html Devsecops_Project/App_code/IncidentManager/
+                else
+                    echo "⚠️ zap-report.html introuvable dans le workspace Jenkins"
+                    ls -al
+                fi
+             '''   
+                
             }
         
             archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/zap-report.html',fingerprint: true

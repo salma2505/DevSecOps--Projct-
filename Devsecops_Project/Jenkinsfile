@@ -13,7 +13,7 @@ pipeline {
                 git branch: 'main', credentialsId: 'github-creds', url: 'https://github.com/salma2505/DevSecOps--Projct-.git'
             }
         }
-         /*
+         
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
@@ -49,8 +49,8 @@ pipeline {
                     }
                 }
             }
-        }*/
-     /*
+        }
+     
 stage('Snyk Vulnerability Scan') {
     steps {
         dir('Devsecops_Project/App_code/IncidentManager') {
@@ -86,10 +86,10 @@ stage('Snyk Vulnerability Scan') {
             }
         }
     }
-}*/
+}
 
 
-        /*
+        
         stage('Build Docker Image') {
             steps {
                 dir('Devsecops_Project') {
@@ -114,7 +114,7 @@ stage('Snyk Vulnerability Scan') {
                 withCredentials([file(credentialsId: 'kubeconfig-host-to-vm', variable: 'KUBECONFIG_FILE')]) {
                     script {
                         env.KUBECONFIG = KUBECONFIG_FILE
-                        sh 'kubectl apply -f Devsecops_Project/Pipeline_CI_CD/kubernetes/deployment_k8s/'
+                        sh 'kubectl apply -f Devsecops_Project/Pipeline_CI_CD/kubernetes/'
                     }
                 }
             }
@@ -134,68 +134,63 @@ stage('Snyk Vulnerability Scan') {
                 }
             }
         }
-    }  /*
-    post{
-        always{
-            
-            archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/snyk-scan-results.json', fingerprint: true
-            script {
-                // Construire l’URL du rapport depuis Jenkins
-                def snykReportUrl = "http://localhost:8080/jenkins/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/Devsecops_Project/App_code/IncidentManager/snyk-scan-results.json"
-                // Message Slack avec lien vers le rapport Snyk
-                def slackMessage = """
+    }  
+    
+    post {
+    always {
+        // 📦 Archivage rapport Snyk
+        archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/snyk-scan-results.json', fingerprint: true
+
+        script {
+            // 🔗 URL rapport Snyk
+            def snykReportUrl = "http://localhost:8080/jenkins/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/Devsecops_Project/App_code/IncidentManager/snyk-scan-results.json"
+            def snykSlackMessage = """
 🔐 *Rapport Snyk – ${env.JOB_NAME} #${env.BUILD_NUMBER}*
 <${snykReportUrl}|📄 Voir le rapport JSON>
-                """.stripIndent()
+            """.stripIndent()
 
-                // Envoi du message Slack
-                sh """
-                    curl -X POST -H 'Content-type: application/json' --data '{
-                        "channel": "#devsecops",
-                        "text": "${slackMessage}"
-                    }' ${SLACK_WEBHOOK}
-                """
-            }
-       
+            // 📤 Envoi Slack Snyk
+            sh """
+                curl -X POST -H 'Content-type: application/json' --data '{
+                    "channel": "#devsecops",
+                    "text": "${snykSlackMessage}"
+                }' ${SLACK_WEBHOOK}
+            """
         }
-    }
-    */
-   
-    post {
-        always {
-            script {
-            // Crée le dossier si besoin
+
+        // 📁 Création du dossier si besoin + déplacement zap-report.html
+        script {
             sh '''
-                mkdir -p Devsecops_Project/App_code/IncidentManager'
-            
-            // Déplace le rapport s'il est à la racine du workspace
+                mkdir -p Devsecops_Project/App_code/IncidentManager
+                
                 if [ -f zap-report.html ]; then
                     mv zap-report.html Devsecops_Project/App_code/IncidentManager/
                 else
                     echo "⚠️ zap-report.html introuvable dans le workspace Jenkins"
                     ls -al
                 fi
-             '''   
-                
-            }
-        
-            archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/zap-report.html',fingerprint: true
-            script {
+            '''
+        }
 
-                def zapReportUrl = "http://localhost:8080/jenkins/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/Devsecops_Project/App_code/IncidentManager/zap-report.html"
-                def slackMessage = """
+        // 📦 Archivage rapport ZAP
+        archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/zap-report.html', fingerprint: true
+
+        // 🔗 Envoi Slack ZAP
+        script {
+            def zapReportUrl = "http://localhost:8080/jenkins/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/Devsecops_Project/App_code/IncidentManager/zap-report.html"
+            def zapSlackMessage = """
 🔐 *Rapport OWASP ZAP – ${env.JOB_NAME} #${env.BUILD_NUMBER}*
 <${zapReportUrl}|📄 Voir le rapport complet>
+            """.stripIndent()
 
-                """.stripIndent()
-
-                sh """
-                    curl -X POST -H 'Content-type: application/json' --data '{
-                        "channel": "#devsecops",
-                        "text": "${slackMessage}"
-                    }' ${SLACK_WEBHOOK}
-                """
-            }
+            sh """
+                curl -X POST -H 'Content-type: application/json' --data '{
+                    "channel": "#devsecops",
+                    "text": "${zapSlackMessage}"
+                }' ${SLACK_WEBHOOK}
+            """
         }
     }
+}
+
 }

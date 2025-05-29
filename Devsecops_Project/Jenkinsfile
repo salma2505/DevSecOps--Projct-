@@ -13,87 +13,66 @@ pipeline {
                 git branch: 'main', credentialsId: 'github-creds', url: 'https://github.com/salma2505/DevSecOps--Projct-.git'
             }
         }
-         
-        stage('SonarQube Analysis') {
+
+        stage('Install Dependencies') {
             steps {
-                withSonarQubeEnv("${SONARQUBE}") {
-                    withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_AUTH_TOKEN')]) {
+                dir('Devsecops_Project/App_code/IncidentManager') {
+                    sh 'npm ci'
+                }
+            }
+        }
+
+        stage('Static & Dependency Scans') {
+            parallel {
+                stage('SonarQube Analysis') {
+                    steps {
+                        withSonarQubeEnv("${SONARQUBE}") {
+                            withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_AUTH_TOKEN')]) {
+                                dir('Devsecops_Project/App_code/IncidentManager') {
+                                    script {
+                                        try {
+                                            sh '''
+                                                npx sonar-scanner \
+                                                  -Dsonar.projectKey=Project \
+                                                  -Dsonar.sources=src \
+                                                  -Dsonar.host.url=$SONAR_HOST_URL \
+                                                  -Dsonar.token=$SONAR_AUTH_TOKEN
+                                            '''
+                                        } catch (err) {
+                                            error("❌ Échec de l'analyse SonarQube : ${err}")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                stage('Snyk Vulnerability Scan') {
+                    steps {
                         dir('Devsecops_Project/App_code/IncidentManager') {
-                            script {
-                                try {
-                                    sh '''
-                                        
-                                        npx sonar-scanner \
-                                          -Dsonar.projectKey=Project \
-                                          -Dsonar.sources=. \
-                                          -Dsonar.host.url=$SONAR_HOST_URL \
-                                          -Dsonar.token=$SONAR_AUTH_TOKEN \
-                                          -Dsonar.javascript.node.maxspace=1024
-                                    '''
-                                    sh """
-                                        curl -X POST -H 'Content-type: application/json' --data '{
-                                            "channel": "#devsecops",
-                                            "text": "✅ SonarQube analysis completed successfully!"
-                                        }' ${SLACK_WEBHOOK}
-                                    """
-                                } catch (err) {
-                                    sh """
-                                        curl -X POST -H 'Content-type: application/json' --data '{
-                                            "channel": "#devsecops",
-                                            "text": "❌ SonarQube analysis failed: ${err}"
-                                        }' ${SLACK_WEBHOOK}
-                                    """
+                            withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) {
+                                script {
+                                    try {
+                                        sh '''
+                                            export SNYK_TOKEN=$SNYK_TOKEN
+                                            npx snyk test --json > snyk-scan-results.json
+                                        '''
+                                    } catch (err) {
+                                        echo "⚠️ Snyk a détecté des vulnérabilités : ${err}"
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        } 
-     
-stage('Snyk Vulnerability Scan') {
-    steps {
-        dir('Devsecops_Project/App_code/IncidentManager') {
-            withCredentials([
-                string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN'),
-                string(credentialsId: 'slack-bot-token', variable: 'SLACK_TOKEN')
-            ]) {
-                script {
-                    try {
-                        // Installer Snyk localement
-                        sh 'npm install snyk'
-
-                        // Exécuter le scan Snyk et sauvegarder le résultat
-                        def snykStatus = sh(
-                            script: """
-                                export SNYK_TOKEN=${SNYK_TOKEN}
-                                npx snyk test --json > snyk-scan-results.json
-                            """,
-                            returnStatus: true
-                        )
-
-                        if (snykStatus != 0) {
-                            echo "⚠️ Snyk a détecté des vulnérabilités (status code ${snykStatus})"
-                        }
-
-
-                    } catch (err) {
-                        echo "Erreur pendant le scan Snyk : ${err}"
-                        error("Snyk scan failed")
-
-                    }
-                }
-            }
         }
-    }
-}
 
-
-        
         stage('Build Docker Image') {
             steps {
                 dir('Devsecops_Project') {
-                    sh 'docker build -t salma2505/incidentshield:latest -f Pipeline_CI_CD/Dockerfile .'
+                    sh 'docker build -t salma2505/node-app:latest -f Pipeline_CI_CD/Dockerfile .'
                 }
             }
         }
@@ -103,12 +82,12 @@ stage('Snyk Vulnerability Scan') {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push salma2505/incidentshield:latest
+                        docker push salma2505/node-app:latest
                     '''
                 }
             }
         }
-     
+
         stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig-host-to-vm', variable: 'KUBECONFIG_FILE')]) {
@@ -119,78 +98,51 @@ stage('Snyk Vulnerability Scan') {
                 }
             }
         }
-        
+
         stage('OWASP ZAP Scan') {
             steps {
                 script {
                     def zap = docker.image('ghcr.io/zaproxy/zaproxy:stable')
                     zap.pull()
                     zap.inside("-v ${pwd()}:/zap/wrk --network=host -u root") {
-                        sh 'chmod -R 777 /zap/wrk'
-                        sh 'zap-baseline.py -t http://localhost:30006 -r zap-report.html || true'
-                        sh 'cp /zap/wrk/zap-report.html .'
-                        sh 'ls -al'
+                        sh '''
+                            chmod -R 777 /zap/wrk
+                            zap-baseline.py -t http://localhost:30006 -r zap-report.html -m 2 || true
+                            cp /zap/wrk/zap-report.html Devsecops_Project/App_code/IncidentManager/
+                        '''
                     }
                 }
             }
         }
-    }  
-    
+    }
+
     post {
-    always {
-        // 📦 Archivage rapport Snyk
-        archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/snyk-scan-results.json', fingerprint: true
+        always {
+            // Archiver rapports
+            archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/*.json', fingerprint: true
+            archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/zap-report.html', fingerprint: true
 
-        script {
-            // 🔗 URL rapport Snyk
-            def snykReportUrl = "http://localhost:8080/jenkins/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/Devsecops_Project/App_code/IncidentManager/snyk-scan-results.json"
-            def snykSlackMessage = """
-🔐 *Rapport Snyk – ${env.JOB_NAME} #${env.BUILD_NUMBER}*
-<${snykReportUrl}|📄 Voir le rapport JSON>
-            """.stripIndent()
+            // Préparer URLs des rapports
+            script {
+                def buildUrl = "http://localhost:8080/jenkins/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/Devsecops_Project/App_code/IncidentManager"
 
-            // 📤 Envoi Slack Snyk
-            sh """
-                curl -X POST -H 'Content-type: application/json' --data '{
-                    "channel": "#devsecops",
-                    "text": "${snykSlackMessage}"
-                }' ${SLACK_WEBHOOK}
-            """
-        }
+                def message = """
+🛡️ *Rapports de Sécurité – ${env.JOB_NAME} #${env.BUILD_NUMBER}*
 
-        // 📁 Création du dossier si besoin + déplacement zap-report.html
-        script {
-            sh '''
-                mkdir -p Devsecops_Project/App_code/IncidentManager
-                
-                if [ -f zap-report.html ]; then
-                    mv zap-report.html Devsecops_Project/App_code/IncidentManager/
-                else
-                    echo "⚠️ zap-report.html introuvable dans le workspace Jenkins"
-                    ls -al
-                fi
-            '''
-        }
+• 🔍 [SonarQube] : Analyse réalisée
+• 📦 [Snyk] : <${buildUrl}/snyk-scan-results.json|Voir JSON>
+• 🌐 [ZAP] : <${buildUrl}/zap-report.html|Voir rapport ZAP>
 
-        // 📦 Archivage rapport ZAP
-        archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/zap-report.html', fingerprint: true
+✅ Fin du pipeline.
+                """.stripIndent()
 
-        // 🔗 Envoi Slack ZAP
-        script {
-            def zapReportUrl = "http://localhost:8080/jenkins/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/Devsecops_Project/App_code/IncidentManager/zap-report.html"
-            def zapSlackMessage = """
-🔐 *Rapport OWASP ZAP – ${env.JOB_NAME} #${env.BUILD_NUMBER}*
-<${zapReportUrl}|📄 Voir le rapport complet>
-            """.stripIndent()
-
-            sh """
-                curl -X POST -H 'Content-type: application/json' --data '{
-                    "channel": "#devsecops",
-                    "text": "${zapSlackMessage}"
-                }' ${SLACK_WEBHOOK}
-            """
+                sh """
+                    curl -X POST -H 'Content-type: application/json' --data '{
+                        "channel": "#devsecops",
+                        "text": "${message}"
+                    }' ${SLACK_WEBHOOK}
+                """
+            }
         }
     }
-}
-
 }

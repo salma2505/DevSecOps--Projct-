@@ -49,7 +49,7 @@ pipeline {
                     }
                 }
             }
-        }
+        } 
      
 stage('Snyk Vulnerability Scan') {
     steps {

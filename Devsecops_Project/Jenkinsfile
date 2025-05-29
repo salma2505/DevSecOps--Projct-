@@ -118,7 +118,7 @@ stage('Snyk Vulnerability Scan') {
                     }
                 }
             }
-        }*/
+        }
         
         stage('OWASP ZAP Scan') {
             steps {

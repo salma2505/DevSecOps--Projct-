@@ -82,7 +82,8 @@ services:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
     environment:
       - discovery.type=single-node
-      - xpack.security.enabled=false   
+      - xpack.security.enabled=false
+      
     ports:
       - 9200:9200
     networks:
@@ -100,6 +101,7 @@ services:
       NODE_OPTIONS: --max-old-space-size=1024
       xpack.encryptedSavedObjects.encryptionKey: UneChaineTresLongueEtSecrete1234567890
       xpack.reporting.encryptionKey: UneAutreChaineTresLongueEtSecrete9876543210
+      xpack.security.enabled: false
     ports:
       - 5601:5601
     networks:
@@ -107,9 +109,22 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'      # Max 0.5 CPU
+          cpus: '1.0'      # Max 0.5 CPU
           memory: 512m    
- 
+  elastalert:
+    image: jertel/elastalert2:latest
+    volumes:
+      - ./elastalert/config.yaml:/opt/elastalert/config.yaml
+      - ./elastalert/rules:/opt/elastalert/rules
+      - ./elastalert/logs:/opt/elastalert/logs
+    environment:
+      - ELASTICSEARCH_HOST=elasticsearch
+      - ELASTICSEARCH_PORT=9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - devsecops-net
+
   waf:
     image: owasp/modsecurity-crs:nginx
     ports:
@@ -120,13 +135,17 @@ services:
       - devsecops-net
 
   ansible:
-    image: williamyeh/ansible:alpine3
+    build: 
+      context: ./ansible
     container_name: ansible
-    volumes:
-      - ./ansible:/ansible
-      - /var/run/docker.sock:/var/run/docker.sock
-    working_dir: /ansible
-    command: tail -f /dev/null
+    user: root
+    volumes:    
+      - ./ansible/playbooks:/playbooks
+    working_dir: /ansible  
+    cap_add:
+      - NET_ADMIN
+    stdin_open: true
+    tty: true  
     networks:
       - devsecops-net
 
@@ -138,6 +157,6 @@ volumes:
   jenkins_home:
   k3s_data:
   postgres_data:
- 
-  
-  
+  zap_data:
+  vault_data:
+  splunk-data:

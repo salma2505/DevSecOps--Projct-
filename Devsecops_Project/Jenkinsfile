@@ -138,7 +138,7 @@ pipeline {
 
                 sh """
                     curl -X POST -H 'Content-type: application/json' --data '{
-                        "channel": "#devsecops",
+                        "channel": "#devsecops-pipeline",
                         "text": "${message}"
                     }' ${SLACK_WEBHOOK}
                 """

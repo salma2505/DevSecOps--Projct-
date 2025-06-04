@@ -10,7 +10,6 @@ WORKDIR /app
 # Copy package files and install dependencies
 COPY ../App_code/IncidentManager/package*.json ./
 
-# Copy .env file into the container
 COPY App_code/IncidentManager/.env ./
 
 RUN npm install

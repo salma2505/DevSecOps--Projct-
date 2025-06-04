@@ -122,7 +122,7 @@ pipeline {
             archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/*.json', fingerprint: true
             archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/zap-report.html', fingerprint: true
 
-            // Préparer URLs des rapports
+           
             script {
                 def buildUrl = "http://localhost:8080/jenkins/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/Devsecops_Project/App_code/IncidentManager"
 

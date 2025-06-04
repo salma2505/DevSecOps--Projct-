@@ -13,7 +13,7 @@ pipeline {
                 git branch: 'main', credentialsId: 'github-creds', url: 'https://github.com/salma2505/DevSecOps--Projct-.git'
             }
         }
-        /*
+        
         stage('Install Dependencies') {
             steps {
                 dir('Devsecops_Project/App_code/IncidentManager') {
@@ -87,7 +87,7 @@ pipeline {
                 }
             }
         }
-       /*
+       
         stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig-host-to-vm', variable: 'KUBECONFIG_FILE')]) {
@@ -144,6 +144,6 @@ pipeline {
                 """
             }
         }
-    }*/
+    }
 }
 }

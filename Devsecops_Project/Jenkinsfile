@@ -118,7 +118,7 @@ pipeline {
 
     post {
         always {
-            
+            //archiver 
             archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/*.json', fingerprint: true
             archiveArtifacts artifacts: 'Devsecops_Project/App_code/IncidentManager/zap-report.html', fingerprint: true
 

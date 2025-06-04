@@ -13,7 +13,7 @@ pipeline {
                 git branch: 'main', credentialsId: 'github-creds', url: 'https://github.com/salma2505/DevSecOps--Projct-.git'
             }
         }
-        //dependencies
+        
         stage('Install Dependencies') {
             steps {
                 dir('Devsecops_Project/App_code/IncidentManager') {

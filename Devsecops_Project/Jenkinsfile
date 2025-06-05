@@ -67,7 +67,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
        
         stage('Build Docker Image') {
             steps {
@@ -75,7 +75,7 @@ pipeline {
                     sh 'docker build -t salma2505/node-app:latest -f Pipeline_CI_CD/Dockerfile .'
                 }
             }
-        }*/
+        }
        
         stage('Push to DockerHub') {
             steps {

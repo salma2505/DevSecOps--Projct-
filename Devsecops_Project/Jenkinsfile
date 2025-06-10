@@ -94,7 +94,7 @@ pipeline {
                 withCredentials([file(credentialsId: 'kubeconfig-host-to-vm', variable: 'KUBECONFIG_FILE')]) {
                     script {
                         env.KUBECONFIG = KUBECONFIG_FILE
-                        sh 'kubectl apply -f Devsecops_Project/Pipeline_CI_CD/kubernetes/'
+                        sh 'k3s kubectl apply -f Devsecops_Project/Pipeline_CI_CD/kubernetes/'
                     }
                 }
             }

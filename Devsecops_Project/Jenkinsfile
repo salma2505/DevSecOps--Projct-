@@ -98,7 +98,7 @@ pipeline {
                 }
             }
         }
-
+         //dynamic security scan 
         stage('OWASP ZAP Scan') {
             steps {
                 script {

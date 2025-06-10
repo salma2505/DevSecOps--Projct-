@@ -21,7 +21,7 @@ pipeline {
                 }
             }
         }
-         /*
+         
         stage('Static & Dependency Scans') {
             parallel {
                 stage('SonarQube Analysis') {
@@ -67,8 +67,8 @@ pipeline {
                     }
                 }
             }
-        }*/
-       /*
+        }
+       
         stage('Build Docker Image') {
             steps {
                 dir('Devsecops_Project') {
@@ -87,7 +87,7 @@ pipeline {
                 }
             }
         }
-       */
+       
         //deploymn stage 
         stage('Deploy to Kubernetes') {
             steps {
@@ -125,7 +125,7 @@ pipeline {
 
            
             script {
-                def buildUrl = "http://localhost:8080/jenkins/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/Devsecops_Project/App_code/IncidentManager"
+                def buildUrl = "http://192.168.82.40:8080/jenkins/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/artifact/Devsecops_Project/App_code/IncidentManager"
 
                 def message = """
 🛡️ *Rapports de Sécurité – ${env.JOB_NAME} #${env.BUILD_NUMBER}*

@@ -68,7 +68,7 @@ pipeline {
                 }
             }
         }*/
-       
+       /*
         stage('Build Docker Image') {
             steps {
                 dir('Devsecops_Project') {
@@ -87,7 +87,7 @@ pipeline {
                 }
             }
         }
-       
+       */
         stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig-host-to-vm', variable: 'KUBECONFIG_FILE')]) {

@@ -87,7 +87,7 @@ pipeline {
                 }
             }
         }
-       /*
+       
         //deploymn stage 
         stage('Deploy to Kubernetes') {
             steps {
@@ -99,6 +99,7 @@ pipeline {
                 }
             }
         }
+        /*
          //dynamic security scan 
         stage('OWASP ZAP Scan') {
             steps {

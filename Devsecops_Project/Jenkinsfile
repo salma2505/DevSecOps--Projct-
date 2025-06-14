@@ -22,55 +22,55 @@ pipeline {
             }
         }
         
-        /*
-        stage('Static & Dependency Scans') {
-            parallel {
-            /*
-                stage('SonarQube Analysis') {
-                    steps {
-                        withSonarQubeEnv("${SONARQUBE}") {
-                            withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_AUTH_TOKEN')]) {
-                                dir('Devsecops_Project/App_code/IncidentManager') {
-                                    script {
-                                        try {
-                                            sh '''
-                                                npx sonar-scanner \
-                                                  -Dsonar.projectKey=Project \
-                                                  -Dsonar.sources=. \
-                                                  -Dsonar.exclusions=**/*.html \
-                                                  -Dsonar.host.url=$SONAR_HOST_URL \
-                                                  -Dsonar.token=$SONAR_AUTH_TOKEN
-                                            '''
-                                        } catch (err) {
-                                            error("❌ Échec de l'analyse SonarQube : ${err}")
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }*/
-                /*
-                stage('Snyk Vulnerability Scan') {
-                    steps {
-                        dir('Devsecops_Project/App_code/IncidentManager') {
-                            withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) {
-                                script {
-                                    try {
-                                        sh '''
-                                            export SNYK_TOKEN=$SNYK_TOKEN
-                                            npx snyk test --json > snyk-scan-results.json || true
-                                        '''
-                                    } catch (err) {
-                                        echo "⚠️ Snyk a détecté des vulnérabilités : ${err}"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }*/
-        }*/
+        
+      //  stage('Static & Dependency Scans') {
+        //    parallel {
+            
+           //     stage('SonarQube Analysis') {
+            //        steps {
+                 //        withSonarQubeEnv("${SONARQUBE}") {
+                    //         withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_AUTH_TOKEN')]) {
+                       //          dir('Devsecops_Project/App_code/IncidentManager') {
+                         //            script {
+                             //            try {
+                                 //            sh '''
+                                   //              npx sonar-scanner \
+                                     //              -Dsonar.projectKey=Project \
+                                       //            -Dsonar.sources=. \
+                                         //          -Dsonar.exclusions=**/*.html \
+                                          //         -Dsonar.host.url=$SONAR_HOST_URL \
+                                           //        -Dsonar.token=$SONAR_AUTH_TOKEN
+                                         //    '''
+                                     //    } catch (err) {
+                                      //       error("❌ Échec de l'analyse SonarQube : ${err}")
+                                  //       }
+                                //     }
+                              //   }
+                           //  }
+                     //    }
+                    // }
+              //   }
+                
+                // stage('Snyk Vulnerability Scan') {
+                   //  steps {
+                    //     dir('Devsecops_Project/App_code/IncidentManager') {
+                        //     withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) {
+                          //       script {
+                              //       try {
+                                   //    //   sh '''
+                                        //     export SNYK_TOKEN=$SNYK_TOKEN
+                                     //        npx snyk test --json > snyk-scan-results.json || true
+                                     //    '''
+                               //      } catch (err) {
+                             //            echo "⚠️ Snyk a détecté des vulnérabilités : ${err}"
+                              //       }
+                            //     }
+                       //      }
+                      //   }
+                  //   }
+               //  }
+            // }
+      //   }
        
         stage('Build Docker Image') {
             steps {

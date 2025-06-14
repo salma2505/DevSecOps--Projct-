@@ -20,7 +20,6 @@ pipeline {
                 }
             }
         }
-         
         stage('Static & Dependency Scans') {
             parallel {
                 stage('SonarQube Analysis') {

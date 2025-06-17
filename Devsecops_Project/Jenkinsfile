@@ -6,7 +6,7 @@ pipeline {
         SLACK_WEBHOOK = credentials('slack_url')
         SNYK_TOKEN = credentials('snyk-token')
     }
-
+    // stages
     stages {
         stage('Checkout') {
             steps {

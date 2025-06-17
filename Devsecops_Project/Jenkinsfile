@@ -71,7 +71,7 @@ pipeline {
                  }
              }
          }
-       /*
+       
         stage('Build Docker Image') {
             steps {
                 dir('Devsecops_Project') {
@@ -148,9 +148,9 @@ pipeline {
                 """
             }
         }
-    }*/
+    }
 }
-}   
+
     
 
 
